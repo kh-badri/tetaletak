@@ -244,19 +244,19 @@ class AprioriService
 
         if ($liftAB > 3.0) {
             $korelasi = 'Korelasi Sangat Kuat';
-            $badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            $badgeColor = 'bg-teal-50 text-teal-800 border-teal-200';
             $keeratanAwam = 'Sangat Erat (Paling Sering Dibeli Bareng)';
         } elseif ($liftAB > 1.5) {
             $korelasi = 'Korelasi Kuat';
-            $badgeColor = 'bg-blue-100 text-blue-800 border-blue-300';
+            $badgeColor = 'bg-sky-50 text-[#0369A1] border-sky-200';
             $keeratanAwam = 'Erat (Sering Dibeli Bareng)';
         } elseif ($liftAB > 1.0) {
             $korelasi = 'Korelasi Positif';
-            $badgeColor = 'bg-amber-100 text-amber-800 border-amber-300';
+            $badgeColor = 'bg-indigo-50 text-indigo-800 border-indigo-200';
             $keeratanAwam = 'Saling Melengkapi';
         } else {
             $korelasi = 'Korelasi Netral/Negatif';
-            $badgeColor = 'bg-gray-100 text-gray-800 border-gray-300';
+            $badgeColor = 'bg-slate-100 text-slate-600 border-slate-200';
             $keeratanAwam = 'Biasa (Tidak Terikat)';
         }
 

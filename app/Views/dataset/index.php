@@ -16,7 +16,7 @@
         this.editData = { ...prod };
         this.editModalOpen = true;
     }
-}" class="min-h-screen bg-[#FFE1AF] py-6 px-4 sm:px-6 text-[#957C62]">
+}" class="min-h-screen bg-[#F0F7FF] py-6 px-4 sm:px-6 text-slate-800">
 
     <div class="container mx-auto max-w-7xl">
 
@@ -35,22 +35,22 @@
         <!-- =================================================================== -->
         <!-- HEADER RINGKAS & STATISTIK INLINE -->
         <!-- =================================================================== -->
-        <div class="bg-white rounded-3xl p-6 mb-6 shadow-md border border-[#E2B59A]/40 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <div class="bg-white rounded-3xl p-6 mb-6 shadow-md shadow-sky-900/5 border border-sky-100 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-[#957C62]">Data Produk &amp; Transaksi Toko</h1>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Kelola daftar barang sembako dan riwayat struk belanja pelanggan untuk analisis tata letak.</p>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Data Produk &amp; Transaksi Toko</h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola daftar barang sembako dan riwayat struk belanja pelanggan untuk analisis tata letak.</p>
                 
                 <!-- Ringkasan Statistik Simpel -->
                 <div class="flex flex-wrap items-center gap-2 mt-3">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFE1AF]/60 text-xs font-bold text-[#957C62]">
-                        <span class="w-2 h-2 rounded-full bg-[#B77466]"></span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-xs font-bold text-[#0369A1]">
+                        <span class="w-2 h-2 rounded-full bg-[#0284C7]"></span>
                         <?= number_format($totalMasterProduk ?? 0, 0, ',', '.') ?> Produk Sembako
                     </span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFE1AF]/60 text-xs font-bold text-[#957C62]">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs font-bold text-teal-800">
+                        <span class="w-2 h-2 rounded-full bg-teal-500"></span>
                         <?= number_format($totalTrx ?? 0, 0, ',', '.') ?> Struk Belanja
                     </span>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
                         <?= number_format($totalData ?? 0, 0, ',', '.') ?> Item Tercatat
                     </span>
                 </div>
@@ -59,14 +59,14 @@
             <!-- Tombol Cepat CSV -->
             <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                 <a href="<?= base_url('public/dataset_transaksi_sembako_2027.csv') ?>" download
-                   class="inline-flex items-center gap-2 bg-[#FFE1AF]/70 hover:bg-[#FFE1AF] text-[#957C62] border border-[#E2B59A] px-4 py-2.5 rounded-xl font-bold text-xs transition">
-                    <svg class="w-4 h-4 text-[#B77466]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="inline-flex items-center gap-2 bg-sky-50 hover:bg-sky-100 text-[#0369A1] border border-sky-200 px-4 py-2.5 rounded-xl font-bold text-xs transition">
+                    <svg class="w-4 h-4 text-[#0284C7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Contoh CSV
                 </a>
                 <a href="<?= base_url('dataset/export') ?>" 
-                   class="inline-flex items-center gap-2 bg-[#957C62] hover:bg-[#7c664f] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition">
+                   class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
@@ -78,19 +78,19 @@
         <!-- =================================================================== -->
         <!-- NAVIGASI TAB TUNGGAL (PRODUK vs TRANSAKSI) -->
         <!-- =================================================================== -->
-        <div class="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-[#E2B59A]/50 shadow-sm mb-6 max-w-xl">
+        <div class="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-sky-100 shadow-sm mb-6 max-w-xl">
             <button type="button" @click="currentTab = 'produk'" 
-                    :class="currentTab === 'produk' ? 'bg-[#B77466] text-white shadow' : 'text-[#957C62] hover:bg-[#FFE1AF]/30'"
+                    :class="currentTab === 'produk' ? 'bg-[#0284C7] text-white shadow-sm' : 'text-slate-600 hover:bg-sky-50'"
                     class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2">
                 <span>1. Daftar Produk</span>
-                <span class="px-2 py-0.5 rounded-full text-[11px]" :class="currentTab === 'produk' ? 'bg-white/25 text-white' : 'bg-[#FFE1AF] text-[#957C62]'"><?= $totalMasterProduk ?></span>
+                <span class="px-2 py-0.5 rounded-full text-[11px]" :class="currentTab === 'produk' ? 'bg-white/25 text-white' : 'bg-sky-100 text-[#0369A1]'"><?= $totalMasterProduk ?></span>
             </button>
 
             <button type="button" @click="currentTab = 'transaksi'" 
-                    :class="currentTab === 'transaksi' ? 'bg-[#B77466] text-white shadow' : 'text-[#957C62] hover:bg-[#FFE1AF]/30'"
+                    :class="currentTab === 'transaksi' ? 'bg-[#0284C7] text-white shadow-sm' : 'text-slate-600 hover:bg-sky-50'"
                     class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2">
                 <span>2. Riwayat Transaksi</span>
-                <span class="px-2 py-0.5 rounded-full text-[11px]" :class="currentTab === 'transaksi' ? 'bg-white/25 text-white' : 'bg-[#FFE1AF] text-[#957C62]'"><?= number_format($totalData, 0, ',', '.') ?></span>
+                <span class="px-2 py-0.5 rounded-full text-[11px]" :class="currentTab === 'transaksi' ? 'bg-white/25 text-white' : 'bg-sky-100 text-[#0369A1]'"><?= number_format($totalData, 0, ',', '.') ?></span>
             </button>
         </div>
 
@@ -98,21 +98,21 @@
         <!-- TAB 1: DAFTAR MASTER PRODUK SEMBAKO (FULL WIDTH & BERSIH) -->
         <!-- =================================================================== -->
         <div x-show="currentTab === 'produk'" x-transition.opacity>
-            <div class="bg-white rounded-3xl shadow-lg border border-[#E2B59A]/30 overflow-hidden">
+            <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden">
                 
                 <!-- Toolbar Pencarian & Tambah Produk -->
-                <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-gray-50/50">
+                <div class="p-5 border-b border-sky-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-sky-50/30">
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
                         <div class="relative flex-1 max-w-xs">
                             <input type="text" x-model="searchProduk" placeholder="Cari nama barang..." 
-                                   class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-gray-200 text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#B77466]">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-sky-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <svg class="w-4 h-4 text-sky-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </div>
 
                         <select x-model="filterKategori" 
-                                class="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#B77466]">
+                                class="px-3 py-2 rounded-xl bg-white border border-sky-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
                             <option value="">Semua Kategori</option>
                             <?php foreach ($kategoriList as $kat) : ?>
                                 <option value="<?= esc($kat) ?>"><?= esc($kat) ?></option>
@@ -121,7 +121,7 @@
                     </div>
 
                     <button type="button" @click="addProdukModalOpen = true"
-                            class="inline-flex items-center justify-center gap-2 bg-[#B77466] hover:bg-[#957C62] text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow-sm transition">
+                            class="inline-flex items-center justify-center gap-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm shadow-sm transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -132,7 +132,7 @@
                 <!-- Tabel Produk -->
                 <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table class="w-full text-xs sm:text-sm text-left">
-                        <thead class="sticky top-0 bg-gray-100 text-[#957C62] text-[11px] uppercase font-bold tracking-wider z-10 border-b">
+                        <thead class="sticky top-0 bg-slate-50 text-slate-600 text-[11px] uppercase font-bold tracking-wider z-10 border-b border-sky-100">
                             <tr>
                                 <th class="px-4 py-3 text-center w-14">No</th>
                                 <th class="px-4 py-3">Nama Produk Sembako</th>
@@ -142,10 +142,10 @@
                                 <th class="px-4 py-3 text-center w-28">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                        <tbody class="divide-y divide-slate-100 text-slate-800">
                             <?php if (empty($daftarProduk)) : ?>
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                    <td colspan="6" class="px-6 py-12 text-center text-slate-500">
                                         Belum ada produk sembako. Klik tombol <strong>+ Tambah Produk Baru</strong> untuk memulai.
                                     </td>
                                 </tr>
@@ -156,29 +156,29 @@
                                         x-show="
                                             (searchProduk === '' || $el.dataset.search.includes(searchProduk.toLowerCase())) &&
                                             (filterKategori === '' || $el.dataset.kategori === filterKategori)
-                                        " class="hover:bg-[#FFE1AF]/20 transition">
-                                        <td class="px-4 py-3 text-center font-bold text-gray-400">
+                                        " class="hover:bg-sky-50/50 transition">
+                                        <td class="px-4 py-3 text-center font-bold text-slate-400">
                                             <?= $idx + 1 ?>
                                         </td>
-                                        <td class="px-4 py-3 font-semibold text-gray-900">
+                                        <td class="px-4 py-3 font-semibold text-slate-900">
                                             <?= esc($prod['nama_produk']) ?>
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap">
-                                            <span class="px-2.5 py-0.5 rounded-full text-xs bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+                                            <span class="px-2.5 py-0.5 rounded-full text-xs bg-sky-50 text-[#0369A1] border border-sky-200 font-medium">
                                                 <?= esc($prod['kategori_produk']) ?>
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-right font-semibold text-gray-700">
+                                        <td class="px-4 py-3 whitespace-nowrap text-right font-semibold text-slate-700">
                                             Rp <?= number_format($prod['harga_satuan'], 0, ',', '.') ?>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center text-xs text-gray-500">
+                                        <td class="px-4 py-3 whitespace-nowrap text-center text-xs text-slate-500">
                                             <?= esc($prod['satuan'] ?? 'Pcs') ?>
                                         </td>
                                         <td class="px-4 py-3 text-center whitespace-nowrap">
                                             <div class="inline-flex items-center gap-1">
                                                 <button type="button" 
                                                         @click="openEditModal(<?= htmlspecialchars(json_encode($prod), ENT_QUOTES, 'UTF-8') ?>)"
-                                                        class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit Produk">
+                                                        class="p-1.5 text-[#0284C7] hover:bg-sky-100 rounded-lg transition" title="Edit Produk">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
@@ -209,25 +209,25 @@
         <!-- TAB 2: RIWAYAT TRANSAKSI PEMBELIAN (FULL WIDTH & BERSIH) -->
         <!-- =================================================================== -->
         <div x-show="currentTab === 'transaksi'" x-transition.opacity style="display: none;">
-            <div class="bg-white rounded-3xl shadow-lg border border-[#E2B59A]/30 overflow-hidden">
+            <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden">
                 
                 <!-- Toolbar Pencarian & Aksi Transaksi -->
-                <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-gray-50/50">
+                <div class="p-5 border-b border-sky-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-sky-50/30">
                     <div class="flex items-center gap-3 flex-1">
                         <div class="relative flex-1 max-w-sm">
                             <input type="text" x-model="searchTransaksi" placeholder="Cari nomor struk atau nama barang..." 
-                                   class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-gray-200 text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#B77466]">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-sky-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <svg class="w-4 h-4 text-sky-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </div>
-                        <span class="text-xs text-gray-500 hidden sm:inline">Menampilkan <?= count($dataset) ?> transaksi terbaru</span>
+                        <span class="text-xs text-slate-500 hidden sm:inline">Menampilkan <?= count($dataset) ?> transaksi terbaru</span>
                     </div>
 
                     <!-- Tombol Aksi Transaksi -->
                     <div class="flex flex-wrap items-center gap-2">
                         <button type="button" @click="addTransaksiModalOpen = true"
-                                class="inline-flex items-center gap-1.5 bg-[#B77466] hover:bg-[#957C62] text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm transition">
+                                class="inline-flex items-center gap-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm transition">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
@@ -235,7 +235,7 @@
                         </button>
 
                         <button type="button" @click="uploadCsvModalOpen = true"
-                                class="inline-flex items-center gap-1.5 bg-[#957C62] hover:bg-[#7c664f] text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm transition">
+                                class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm transition">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                             </svg>
@@ -261,7 +261,7 @@
                 <!-- Tabel Data Transaksi -->
                 <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table class="w-full text-xs sm:text-sm text-left">
-                        <thead class="sticky top-0 bg-gray-100 text-[#957C62] text-[11px] uppercase font-bold tracking-wider z-10 border-b">
+                        <thead class="sticky top-0 bg-slate-50 text-slate-600 text-[11px] uppercase font-bold tracking-wider z-10 border-b border-sky-100">
                             <tr>
                                 <th class="px-4 py-3">No Struk</th>
                                 <th class="px-4 py-3">Tanggal</th>
@@ -273,10 +273,10 @@
                                 <th class="px-4 py-3 text-center w-16">Hapus</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                        <tbody class="divide-y divide-slate-100 text-slate-800">
                             <?php if (empty($dataset)) : ?>
                                 <tr>
-                                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                    <td colspan="8" class="px-6 py-12 text-center text-slate-500">
                                         Belum ada data transaksi. Klik <strong>Import CSV</strong> atau <strong>Catat Transaksi</strong> di atas.
                                     </td>
                                 </tr>
@@ -284,35 +284,35 @@
                                 <?php foreach ($dataset as $i => $row) : ?>
                                     <tr data-search="<?= strtolower(esc(($row['no_transaksi'] ?? '') . ' ' . ($row['nama_produk'] ?? ''))) ?>"
                                         x-show="searchTransaksi === '' || $el.dataset.search.includes(searchTransaksi.toLowerCase())"
-                                        class="<?= ($i % 2 == 0) ? 'bg-white' : 'bg-gray-50/40' ?> hover:bg-[#FFE1AF]/20 transition">
-                                        <td class="px-4 py-2.5 whitespace-nowrap font-mono text-xs font-semibold text-[#B77466]">
+                                        class="<?= ($i % 2 == 0) ? 'bg-white' : 'bg-slate-50/40' ?> hover:bg-sky-50/50 transition">
+                                        <td class="px-4 py-2.5 whitespace-nowrap font-mono text-xs font-semibold text-[#0284C7]">
                                             <?= esc($row['no_transaksi'] ?: 'TRX-' . $row['id']) ?>
                                         </td>
-                                        <td class="px-4 py-2.5 whitespace-nowrap text-gray-500 text-xs">
+                                        <td class="px-4 py-2.5 whitespace-nowrap text-slate-500 text-xs">
                                             <?= date('d/m/Y', strtotime($row['waktu_penjualan'])) ?>
                                         </td>
-                                        <td class="px-4 py-2.5 font-medium text-gray-900">
+                                        <td class="px-4 py-2.5 font-medium text-slate-900">
                                             <?= esc($row['nama_produk']) ?>
                                         </td>
                                         <td class="px-4 py-2.5 whitespace-nowrap text-xs">
-                                            <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                            <span class="px-2 py-0.5 rounded-full bg-sky-50 text-[#0369A1] border border-sky-200">
                                                 <?= esc($row['kategori_produk']) ?>
                                             </span>
                                         </td>
-                                        <td class="px-4 py-2.5 whitespace-nowrap text-right text-gray-600">
+                                        <td class="px-4 py-2.5 whitespace-nowrap text-right text-slate-600">
                                             Rp <?= number_format($row['harga_produk_rp'], 0, ',', '.') ?>
                                         </td>
-                                        <td class="px-4 py-2.5 text-center font-bold text-gray-800">
+                                        <td class="px-4 py-2.5 text-center font-bold text-slate-800">
                                             <?= $row['jumlah_terjual_unit'] ?>
                                         </td>
-                                        <td class="px-4 py-2.5 whitespace-nowrap text-right font-bold text-[#957C62]">
+                                        <td class="px-4 py-2.5 whitespace-nowrap text-right font-bold text-slate-900">
                                             Rp <?= number_format($row['total_harga'] ?: ($row['harga_produk_rp'] * $row['jumlah_terjual_unit']), 0, ',', '.') ?>
                                         </td>
                                         <td class="px-4 py-2.5 text-center">
                                             <form action="<?= base_url('dataset/delete/' . $row['id']) ?>" method="post" onsubmit="return confirm('Hapus item transaksi ini?');" class="inline">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus Baris">
+                                                <button type="submit" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus Baris">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
@@ -334,27 +334,27 @@
     <!-- MODAL 1: TAMBAH PRODUK SEMBAKO BARU -->
     <!-- =================================================================== -->
     <div x-show="addProdukModalOpen" x-cloak 
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.away="addProdukModalOpen = false" 
-             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-[#E2B59A]/50 relative"
+             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-sky-100 relative"
              x-transition>
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
-                <h3 class="font-black text-[#957C62] text-lg">Tambah Produk Sembako</h3>
-                <button @click="addProdukModalOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-black text-slate-900 text-lg">Tambah Produk Sembako</h3>
+                <button @click="addProdukModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
             </div>
 
             <form action="<?= base_url('dataset/produk/save') ?>" method="post" class="space-y-3.5">
                 <?= csrf_field() ?>
                 <div>
-                    <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Nama Produk</label>
+                    <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Nama Produk</label>
                     <input type="text" name="nama_produk" placeholder="Contoh: Beras Rojolele 5kg" required 
-                           class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                           class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Kategori</label>
+                    <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Kategori</label>
                     <input type="text" name="kategori_produk" list="kategori_datalist_modal" placeholder="Pilih atau ketik kategori..." required 
-                           class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                           class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                     <datalist id="kategori_datalist_modal">
                         <?php foreach ($kategoriList as $k): ?>
                             <option value="<?= esc($k) ?>">
@@ -364,20 +364,20 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Harga (Rp)</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Harga (Rp)</label>
                         <input type="number" name="harga_satuan" placeholder="72000" required 
-                               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                               class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Satuan</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Satuan</label>
                         <input type="text" name="satuan" value="Pcs" placeholder="Kg / Pcs / Botol" required 
-                               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                               class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                    <button type="button" @click="addProdukModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#B77466] hover:bg-[#957C62] text-white shadow-md">Simpan Produk</button>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="addProdukModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md">Simpan Produk</button>
                 </div>
             </form>
         </div>
@@ -387,45 +387,45 @@
     <!-- MODAL 2: EDIT PRODUK SEMBAKO -->
     <!-- =================================================================== -->
     <div x-show="editModalOpen" x-cloak 
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.away="editModalOpen = false" 
-             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-[#E2B59A]/50 relative"
+             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-sky-100 relative"
              x-transition>
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
-                <h3 class="font-black text-[#957C62] text-lg">Edit Produk Sembako</h3>
-                <button @click="editModalOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-black text-slate-900 text-lg">Edit Produk Sembako</h3>
+                <button @click="editModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
             </div>
 
             <form :action="'<?= base_url('dataset/produk/update') ?>/' + editData.id" method="post" class="space-y-3.5">
                 <?= csrf_field() ?>
                 <div>
-                    <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Nama Produk</label>
+                    <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Nama Produk</label>
                     <input type="text" name="nama_produk" x-model="editData.nama_produk" required 
-                           class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                           class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Kategori</label>
+                    <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Kategori</label>
                     <input type="text" name="kategori_produk" x-model="editData.kategori_produk" required 
-                           class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                           class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Harga (Rp)</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Harga (Rp)</label>
                         <input type="number" name="harga_satuan" x-model="editData.harga_satuan" required 
-                               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                               class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Satuan</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Satuan</label>
                         <input type="text" name="satuan" x-model="editData.satuan" required 
-                               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                               class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#B77466] hover:bg-[#957C62] text-white shadow-md">Simpan Perubahan</button>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -435,32 +435,32 @@
     <!-- MODAL 3: CATAT TRANSAKSI MANUAL -->
     <!-- =================================================================== -->
     <div x-show="addTransaksiModalOpen" x-cloak 
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.away="addTransaksiModalOpen = false" 
-             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-[#E2B59A]/50 relative"
+             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-sky-100 relative"
              x-transition>
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
-                <h3 class="font-black text-[#957C62] text-lg">Catat Transaksi Pembelian</h3>
-                <button @click="addTransaksiModalOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-black text-slate-900 text-lg">Catat Transaksi Pembelian</h3>
+                <button @click="addTransaksiModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
             </div>
 
             <form action="<?= base_url('dataset/save') ?>" method="post" class="space-y-3.5">
                 <?= csrf_field() ?>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">No Struk (Opsional)</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">No Struk (Opsional)</label>
                         <input type="text" name="no_transaksi" placeholder="Otomatis jika kosong" 
-                               class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs text-gray-900">
+                               class="w-full px-3.5 py-2 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs text-slate-900">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Tanggal</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Tanggal</label>
                         <input type="date" name="waktu_penjualan" value="<?= date('Y-m-d') ?>" required 
-                               class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs text-gray-900">
+                               class="w-full px-3.5 py-2 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs text-slate-900">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Pilih Produk Sembako</label>
+                    <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Pilih Produk Sembako</label>
                     <select name="nama_produk" required 
                             @change="
                                 let sel = $event.target.selectedOptions[0];
@@ -468,7 +468,7 @@
                                 document.getElementById('input_hrg_modal').value = sel.getAttribute('data-hrg') || '';
                                 document.getElementById('input_id_prod_modal').value = sel.getAttribute('data-id') || '';
                             "
-                            class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs sm:text-sm text-gray-900">
+                            class="w-full px-3.5 py-2.5 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs sm:text-sm text-slate-900">
                         <option value="">-- Pilih Produk --</option>
                         <?php foreach ($daftarProduk as $p): ?>
                             <option value="<?= esc($p['nama_produk']) ?>" 
@@ -483,27 +483,27 @@
                 </div>
 
                 <div>
-                    <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Kategori</label>
+                    <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Kategori</label>
                     <input type="text" name="kategori_produk" id="input_kat_modal" placeholder="Terisi otomatis" required 
-                           class="w-full px-3.5 py-2 bg-gray-100 border border-gray-200 rounded-xl text-xs text-gray-900">
+                           class="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-900">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Harga (Rp)</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Harga (Rp)</label>
                         <input type="number" name="harga_produk_rp" id="input_hrg_modal" placeholder="0" required 
-                               class="w-full px-3.5 py-2 bg-gray-100 border border-gray-200 rounded-xl text-xs text-gray-900">
+                               class="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-900">
                     </div>
                     <div>
-                        <label class="block mb-1 text-xs font-bold text-gray-700 uppercase">Jumlah Beli</label>
+                        <label class="block mb-1 text-xs font-bold text-slate-600 uppercase">Jumlah Beli</label>
                         <input type="number" name="jumlah_terjual_unit" value="1" min="1" required 
-                               class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B77466] text-xs text-gray-900">
+                               class="w-full px-3.5 py-2 bg-sky-50/30 border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-xs text-slate-900">
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                    <button type="button" @click="addTransaksiModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#B77466] hover:bg-[#957C62] text-white shadow-md">Simpan Transaksi</button>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="addTransaksiModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md">Simpan Transaksi</button>
                 </div>
             </form>
         </div>
@@ -513,16 +513,16 @@
     <!-- MODAL 4: IMPORT CSV SEKALIGUS -->
     <!-- =================================================================== -->
     <div x-show="uploadCsvModalOpen" x-cloak 
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div @click.away="uploadCsvModalOpen = false" 
-             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-[#E2B59A]/50 relative"
+             class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-sky-100 relative"
              x-transition>
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
-                <h3 class="font-black text-[#957C62] text-lg">Import Data Transaksi (CSV)</h3>
-                <button @click="uploadCsvModalOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-black text-slate-900 text-lg">Import Data Transaksi (CSV)</h3>
+                <button @click="uploadCsvModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
             </div>
 
-            <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200/80 text-xs text-amber-900 mb-4 leading-relaxed">
+            <div class="bg-sky-50 p-3.5 rounded-2xl border border-sky-200 text-xs text-[#0369A1] mb-4 leading-relaxed">
                 <strong class="block mb-1">Perhatian:</strong>
                 Upload file CSV (pemisah koma <code class="bg-white px-1 rounded">,</code>) akan menggantikan seluruh riwayat transaksi lama dengan data baru di dalam file.
             </div>
@@ -530,14 +530,14 @@
             <form action="<?= base_url('dataset/upload') ?>" method="post" enctype="multipart/form-data" class="space-y-4">
                 <?= csrf_field() ?>
                 <div>
-                    <label class="block mb-1.5 text-xs font-bold text-gray-700 uppercase">Pilih File (.csv)</label>
+                    <label class="block mb-1.5 text-xs font-bold text-slate-600 uppercase">Pilih File (.csv)</label>
                     <input type="file" name="dataset_csv" accept=".csv,text/csv,text/plain" required
-                           class="block w-full text-xs text-[#957C62] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-bold file:bg-[#B77466] file:text-white hover:file:bg-[#957C62] cursor-pointer border border-gray-200 rounded-xl p-1.5 bg-gray-50">
+                           class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-bold file:bg-[#0284C7] file:text-white hover:file:bg-[#0369A1] cursor-pointer border border-sky-200 rounded-xl p-1.5 bg-sky-50/30">
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                    <button type="button" @click="uploadCsvModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#B77466] hover:bg-[#957C62] text-white shadow-md">Upload &amp; Proses File</button>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="uploadCsvModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md">Upload &amp; Proses File</button>
                 </div>
             </form>
         </div>
