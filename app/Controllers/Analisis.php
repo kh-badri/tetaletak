@@ -49,7 +49,7 @@ class Analisis extends BaseController
             $scriptPath = WRITEPATH . "python/run_analysis_nb.py";
 
             if (!file_exists($scriptPath)) {
-                 throw new \RuntimeException("File skrip Python tidak ditemukan. Path: " . $scriptPath);
+                throw new \RuntimeException("File skrip Python tidak ditemukan. Path: " . $scriptPath);
             }
 
             // Amankan argumen
@@ -90,7 +90,6 @@ class Analisis extends BaseController
                 'hasil'       => $hasil,
                 'active_menu' => 'analisis'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Error Analisis Naive Bayes: ' . $e->getMessage());
             return redirect()->back()->withInput()
@@ -101,11 +100,14 @@ class Analisis extends BaseController
     /**
      * Simpan hasil dari session ke database history
      */
+    /**
+     * Simpan hasil dari session ke database history
+     */
     public function simpan()
     {
         // Ambil data dari session
         $hasilTerakhir = $this->session->get('hasil_analisis_terakhir');
-        
+
         if (empty($hasilTerakhir)) {
             return redirect()->to('analisis')->with('error', 'Tidak ada hasil analisis untuk disimpan.');
         }
@@ -116,8 +118,12 @@ class Analisis extends BaseController
                 'tanggal_analisis' => date('Y-m-d H:i:s'),
                 'accuracy'         => $hasilTerakhir['evaluasi']['accuracy'],
                 'total_data'       => $hasilTerakhir['evaluasi']['total_data'],
+                // Analisis berisi statistik rata-rata
                 'hasil_analisis'   => json_encode($hasilTerakhir['analisis']),
-                'hasil_evaluasi'   => json_encode($hasilTerakhir['evaluasi']) // Simpan semua data evaluasi
+                // Evaluasi berisi Confusion Matrix & Report
+                'hasil_evaluasi'   => json_encode($hasilTerakhir['evaluasi']),
+                // BARU: Simpan detail prediksi (daftar produk) agar history lengkap
+                'hasil_prediksi'   => json_encode($hasilTerakhir['detail_prediksi'])
             ];
 
             // Simpan ke DB menggunakan Model
@@ -126,9 +132,7 @@ class Analisis extends BaseController
             // Hapus session agar tidak bisa disimpan dua kali
             $this->session->remove('hasil_analisis_terakhir');
 
-            // Arahkan ke halaman history (yang akan kita buat)
             return redirect()->to('history')->with('success', 'Hasil analisis berhasil disimpan ke riwayat.');
-
         } catch (\Exception $e) {
             log_message('error', 'Gagal simpan history: ' . $e->getMessage());
             return redirect()->to('analisis')->with('error', 'Terjadi kesalahan saat menyimpan ke database: ' . $e->getMessage());

@@ -19,7 +19,8 @@ class HistoryModel extends Model
         'accuracy', 
         'total_data', 
         'hasil_analisis', 
-        'hasil_evaluasi'
+        'hasil_evaluasi',
+        'hasil_prediksi'
     ];
 
     // Menggunakan created_at bawaan

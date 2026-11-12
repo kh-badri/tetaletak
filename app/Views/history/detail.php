@@ -1,369 +1,522 @@
-<?php 
-// File: app/Views/analisis/hasil.php
-helper('form');
-
-/**
- * Fungsi helper kecil untuk mencari data fitur dari array $analisis
- * (VERSI AMAN: dengan fallback untuk mencegah error)
- */
-if (!function_exists('find_feature_data')) {
-    function find_feature_data($analisis_array, $feature_name) {
-        // Pengecekan penting jika $analisis_array bukan array
-        if (!is_array($analisis_array)) {
-             return ['rata_rata_ya_turun' => 0, 'rata_rata_tidak_turun' => 0];
-        }
-        foreach ($analisis_array as $item) {
-            if (isset($item['fitur']) && $item['fitur'] == $feature_name) {
-                return $item;
-            }
-        }
-        // Fallback jika tidak ketemu
-        return ['rata_rata_ya_turun' => 0, 'rata_rata_tidak_turun' => 0];
-    }
-}
-
-// --- PERBAIKAN PENTING ---
-// Seluruh logika pemrosesan data HARUS berada di dalam cek ini
-// untuk mencegah error jika $hasil = null
-if (isset($hasil) && $hasil['status'] == 'success') {
-    // Ambil data analisis (pengetahuan model)
-    $analisis = $hasil['analisis']; 
-    // Ambil data evaluasi (akurasi, dll)
-    $evaluasi = $hasil['evaluasi']; 
-
-    // Ekstrak data spesifik untuk analisis yang mudah dibaca
-    $data_harga = find_feature_data($analisis, 'harga_produk_rp');
-    $data_jumlah = find_feature_data($analisis, 'jumlah_terjual_unit');
-    $data_bulan = find_feature_data($analisis, 'bulan');
-
-    // Tentukan interpretasi
-    $interpretasi_harga = ($data_harga['rata_rata_ya_turun'] > $data_harga['rata_rata_tidak_turun']) 
-        ? "Harga Cenderung LEBIH MAHAL" 
-        : "Harga Cenderung LEBIH MURAH";
-    // Gunakan warna palet #B77466 (Terracotta) untuk "negatif"
-    $warna_harga = ($interpretasi_harga == "Harga Cenderung LEBIH MAHAL") ? "text-[#B77466]" : "text-green-600";
-
-    $interpretasi_jumlah = ($data_jumlah['rata_rata_ya_turun'] < $data_jumlah['rata_rata_tidak_turun'])
-        ? "Penjualan Cenderung LEBIH SEDIKIT"
-        : "Penjualan Cenderung LEBIH BANYAK";
-    // Gunakan warna palet #B77466 (Terracotta) untuk "negatif"
-    $warna_jumlah = ($interpretasi_jumlah == "Penjualan Cenderung LEBIH SEDIKIT") ? "text-[#B77466]" : "text-green-600";
-
-    $nama_bulan_ya = date('F', mktime(0, 0, 0, (int)$data_bulan['rata_rata_ya_turun'], 10));
-    $interpretasi_bulan = "Cenderung terjadi di sekitar bulan " . $nama_bulan_ya;
-}
-?>
-
+<?php helper(['form', 'url']); ?>
 <?= $this->extend('layout/layout'); ?>
 <?= $this->section('content'); ?>
 
-<!-- Latar belakang: #FFE1AF (Krem) -->
-<div class="w-full min-h-screen bg-[#FFE1AF] p-4 lg:p-8 text-[#957C62]">
-    <div class="container mx-auto">
+<?php
+    $manual    = $hasil['perhitungan_manual'] ?? [];
+    $ringkasan = $manual['ringkasan'] ?? [];
+    $kasus     = $manual['contoh_kasus'] ?? null;
+    $c1Lengkap = $manual['c1_lengkap'] ?? [];
+    $rekomendasi = $hasil['rekomendasi_tataletak'] ?? [];
+    $top3 = array_slice($rekomendasi, 0, 3);
+?>
 
-        <!-- Tombol Aksi Atas -->
-        <div class="flex justify-between items-center mb-6">
-            <!-- Tombol Kembali -->
-            <a href="<?= base_url('analisis') ?>" class="text-[#957C62] font-semibold hover:text-[#B77466] transition duration-300 flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Kembali ke Analisis
+<div class="w-full min-h-screen bg-[#FFE1AF] py-6 px-4 sm:px-6 text-[#957C62]" 
+     x-data="{ 
+        activeTab: 'rekomendasi', 
+        subTabTeknis: 'rules',
+        searchRek: '',
+        filterTipe: '',
+        searchTeknis: ''
+     }">
+    <div class="container mx-auto max-w-7xl">
+
+        <!-- =================================================================== -->
+        <!-- BARIS ATAS: KEMBALI KE RIWAYAT & TANGGAL -->
+        <!-- =================================================================== -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+            <a href="<?= base_url('history') ?>" 
+               class="inline-flex items-center gap-2 bg-white text-[#957C62] hover:text-[#B77466] border border-[#E2B59A] px-4 py-2 rounded-xl font-bold text-xs sm:text-sm shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Kembali ke Daftar Riwayat
             </a>
 
-            <!-- Tombol Simpan: #957C62 (Coklat Muted) -->
-            <?php if (session()->has('hasil_analisis_terakhir')) : ?>
-                <?= form_open('analisis/simpan') ?>
-                    <button type="submit" class="bg-[#957C62] hover:bg-opacity-80 text-white font-bold py-2 px-5 rounded-lg transition duration-300 shadow-lg transform hover:scale-105 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                        Simpan Hasil Ini
-                    </button>
-                <?= form_close() ?>
-            <?php endif; ?>
+            <div class="text-xs text-gray-600 bg-white px-4 py-2 rounded-xl border border-[#E2B59A]/40 shadow-sm">
+                Disimpan pada: <strong class="text-gray-900"><?= date('d F Y, H:i', strtotime($tanggal_analisis ?? 'now')) ?> WIB</strong>
+            </div>
         </div>
 
-        <!-- Cek jika $hasil ada dan sukses -->
-        <?php if (isset($hasil) && $hasil['status'] == 'success') : ?>
-
-            <!-- Layout Dashboard 2 Kolom -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                <!-- ============================================= -->
-                <!-- KOLOM KIRI (STICKY): RINGKASAN                -->
-                <!-- ============================================= -->
-                <div class="lg:col-span-1">
-                    <div class="lg:sticky lg:top-8 space-y-6">
-                        
-                        <!-- Kartu Akurasi (Hero) -->
-                        <div class="bg-white p-6 rounded-xl shadow-xl border border-gray-200 text-center">
-                            <h3 class="text-lg font-medium text-[#957C62]">Akurasi Prediksi Model</h3>
-                            <!-- Akurasi: #B77466 (Terracotta) -->
-                            <p class="text-7xl font-bold text-[#B77466] my-3">
-                                <?= number_format($evaluasi['accuracy'], 2) ?><span class="text-5xl">%</span>
-                            </p>
-                            <p class="text-sm text-gray-600">
-                                Model berhasil memprediksi <?= number_format($evaluasi['accuracy'], 0) ?> dari 100 data uji dengan benar.
-                            </p>
-                        </div>
-
-                        <!-- Kartu Faktor Kunci -->
-                        <div class="bg-white p-6 rounded-xl shadow-xl border border-gray-200">
-                            <h3 class="text-2xl font-semibold text-[#957C62] mb-4 border-b border-[#E2B59A] pb-2">
-                                Faktor Kunci Penurunan
-                            </h3>
-                            <ul class="space-y-3">
-                                <li class="flex items-start">
-                                    <span class="text-xl mr-3 pt-1">💰</span>
-                                    <div>
-                                        <span class="font-bold text-gray-800">Harga Produk</span>
-                                        <p class="text-sm <?= $warna_harga ?>"><?= $interpretasi_harga ?></p>
-                                    </div>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="text-xl mr-3 pt-1">📉</span>
-                                    <div>
-                                        <span class="font-bold text-gray-800">Popularitas</span>
-                                        <p class="text-sm <?= $warna_jumlah ?>"><?= $interpretasi_jumlah ?></p>
-                                    </div>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="text-xl mr-3 pt-1">📅</span>
-                                    <div>
-                                        <span class="font-bold text-gray-800">Waktu</span>
-                                        <p class="text-sm text-gray-700"><?= $interpretasi_bulan ?></p>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- ============================================= -->
-                <!-- KOLOM KANAN (SCROLL): DETAIL TABS           -->
-                <!-- ============================================= -->
-                <div class="lg:col-span-2 space-y-8">
-                    
-                    <!-- Tampilan Tab Sederhana (Warna Baru) -->
-                    <div class="bg-white rounded-xl shadow-xl border border-gray-200 p-2">
-                        <nav class="flex space-x-2" id="tabs">
-                            <!-- Tab Aktif: #B77466 (Terracotta) -->
-                            <button data-tab-target="analisis" class="tab-button active flex-1 text-center font-semibold py-3 px-4 rounded-lg bg-[#B77466] text-white shadow">
-                                Hasil Analisis (Interpretasi)
-                            </button>
-                            <button data-tab-target="evaluasi" class="tab-button flex-1 text-center font-semibold py-3 px-4 rounded-lg text-gray-500 hover:bg-[#FFE1AF]/40 hover:text-[#957C62]">
-                                Detail Evaluasi (Teknis)
-                            </button>
-                        </nav>
-                    </div>
-
-                    <!-- KONTEN TAB 1: HASIL ANALISIS -->
-                    <div id="analisis" class="tab-content">
-                        <div class="bg-white p-6 rounded-xl shadow-xl border border-gray-200 mb-8">
-                            <h2 class="text-3xl font-semibold mb-6 text-[#957C62]">
-                                Analisis Mendalam Faktor Penentu
-                            </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Kartu 1: Analisis Harga -->
-                                <div class="bg-[#FFE1AF]/40 p-6 rounded-lg border border-[#E2B59A] shadow-inner">
-                                    <div class="flex items-center mb-3">
-                                        <span class="text-2xl mr-3">💰</span>
-                                        <h3 class="text-xl font-semibold text-[#957C62]">Faktor Harga Produk</h3>
-                                    </div>
-                                    <p class="text-2xl font-bold <?= $warna_harga ?> mb-2">
-                                        <?= $interpretasi_harga ?>
-                                    </p>
-                                    <p class="text-gray-700 text-sm">
-                                        Produk 'Ya Turun' harganya rata-rata <strong>Rp <?= number_format($data_harga['rata_rata_ya_turun'], 0, ',', '.') ?></strong>.
-                                        <br>
-                                        Produk 'Tidak Turun' harganya rata-rata <strong>Rp <?= number_format($data_harga['rata_rata_tidak_turun'], 0, ',', '.') ?></strong>.
-                                    </p>
-                                </div>
-
-                                <!-- Kartu 2: Analisis Jumlah Terjual -->
-                                <div class="bg-[#FFE1AF]/40 p-6 rounded-lg border border-[#E2B59A] shadow-inner">
-                                     <div class="flex items-center mb-3">
-                                        <span class="text-2xl mr-3">📉</span>
-                                        <h3 class="text-xl font-semibold text-[#957C62]">Faktor Popularitas</h3>
-                                    </div>
-                                    <p class="text-2xl font-bold <?= $warna_jumlah ?> mb-2">
-                                        <?= $interpretasi_jumlah ?>
-                                    </p>
-                                    <p class="text-gray-700 text-sm">
-                                        Produk 'Ya Turun' rata-rata terjual <strong><?= number_format($data_jumlah['rata_rata_ya_turun'], 0, ',', '.') ?> unit/bulan</strong>.
-                                        <br>
-                                        Produk 'Tidak Turun' rata-rata terjual <strong><?= number_format($data_jumlah['rata_rata_tidak_turun'], 0, ',', '.') ?> unit/bulan</strong>.
-                                    </p>
-                                </div>
-                                
-                                <!-- Kartu 3: Analisis Waktu (Bulan) -->
-                                <div class="md:col-span-2 bg-[#FFE1AF]/40 p-6 rounded-lg border border-[#E2B59A] shadow-inner">
-                                     <div class="flex items-center mb-3">
-                                        <span class="text-2xl mr-3">📅</span>
-                                        <h3 class="text-xl font-semibold text-[#957C62]">Faktor Waktu (Musiman)</h3>
-                                    </div>
-                                    <p class="text-2xl font-bold text-gray-800 mb-2">
-                                        <?= $interpretasi_bulan ?>
-                                    </p>
-                                    <p class="text-gray-700 text-sm">
-                                        Penurunan penjualan paling sering terjadi pada rata-rata bulan ke-<strong><?= number_format($data_bulan['rata_rata_ya_turun'], 1, ',', '.') ?></strong>.
-                                        <br>
-                                        Penjualan stabil paling sering terjadi pada rata-rata bulan ke-<strong><?= number_format($data_bulan['rata_rata_tidak_turun'], 1, ',', '.') ?></strong>.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- KONTEN TAB 2: DETAIL EVALUASI -->
-                    <div id="evaluasi" class="tab-content hidden">
-                        <div class="bg-white p-6 rounded-xl shadow-xl border border-gray-200 space-y-8">
-                            
-                            <!-- Bagian: Ringkasan Data -->
-                            <div>
-                                <h3 class="text-2xl font-semibold text-[#957C62] mb-4">Ringkasan Data</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
-                                        <span class="text-sm text-gray-500">Total Data</span>
-                                        <p class="text-3xl font-bold text-[#957C62]"><?= $evaluasi['total_data'] ?></p>
-                                    </div>
-                                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
-                                        <span class="text-sm text-gray-500">Data Training (80%)</span>
-                                        <p class="text-3xl font-bold text-[#957C62]"><?= $evaluasi['total_training'] ?></p>
-                                    </div>
-                                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
-                                        <span class="text-sm text-gray-500">Data Testing (20%)</span>
-                                        <p class="text-3xl font-bold text-[#957C62]"><?= $evaluasi['total_testing'] ?></p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Bagian: Confusion Matrix -->
-                            <div>
-                                <h3 class="text-2xl font-semibold text-[#957C62] mb-4">Confusion Matrix</h3>
-                                <?php $cm = $evaluasi['confusion_matrix']; ?>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full border-collapse border border-[#E2B59A]">
-                                        <thead>
-                                            <tr>
-                                                <th class="p-3 border border-[#E2B59A]"></th>
-                                                <th class="p-3 border border-[#E2B59A] bg-gray-100" colspan="2">Prediksi Model</th>
-                                            </tr>
-                                            <tr>
-                                                <th class="p-3 border border-[#E2B59A] bg-gray-100">Data Aktual</th>
-                                                <th class="p-3 border border-[#E2B59A] bg-[#FFE1AF]/40">Prediksi: TIDAK</th>
-                                                <th class="p-3 border border-[#E2B59A] bg-[#B77466]/20">Prediksi: YA</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr class="text-center">
-                                                <th class="p-4 border border-[#E2B59A] bg-[#FFE1AF]/40">Aktual: TIDAK</th>
-                                                <td class="p-4 border border-[#E2B59A] bg-green-100 text-green-900 font-bold text-xl">
-                                                    <?= $cm['true_negative'] ?> <span class="block text-xs font-normal">(True Negative)</span>
-                                                </td>
-                                                <td class="p-4 border border-[#E2B59A] bg-red-100 text-red-900 font-bold text-xl">
-                                                    <?= $cm['false_positive'] ?> <span class="block text-xs font-normal">(False Positive)</span>
-                                                </td>
-                                            </tr>
-                                            <tr class="text-center">
-                                                <th class="p-4 border border-[#E2B59A] bg-[#B77466]/20">Aktual: YA</th>
-                                                <td class="p-4 border border-[#E2B59A] bg-red-100 text-red-900 font-bold text-xl">
-                                                    <?= $cm['false_negative'] ?> <span class="block text-xs font-normal">(False Negative)</span>
-                                                </td>
-                                                <td class="p-4 border border-[#E2B59A] bg-green-100 text-green-900 font-bold text-xl">
-                                                    <?= $cm['true_positive'] ?> <span class="block text-xs font-normal">(True Positive)</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            
-                            <!-- Bagian: Classification Report -->
-                            <div>
-                                <h3 class="text-2xl font-semibold text-[#957C62] mb-4">Detail Performa (Per Kelas)</h3>
-                                <?php $report = $evaluasi['classification_report']; ?>
-                                <table class="w-full border-collapse border border-[#E2B59A]">
-                                     <thead class="bg-gray-100">
-                                        <tr>
-                                            <th class="p-3 border border-[#E2B59A] text-left">Kelas</th>
-                                            <th class="p-3 border border-[#E2B59A] text-center">Precision</th>
-                                            <th class="p-3 border border-[#E2B59A] text-center">Recall</th>
-                                            <th class="p-3 border border-[#E2B59A] text-center">F1-Score</th>
-                                            <th class="p-3 border border-[#E2B59A] text-center">Support</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="text-center">
-                                            <th class="p-3 border border-[#E2B59A] text-left bg-[#FFE1AF]/40">Tidak (Penurunan)</th>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['Tidak']['precision'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['Tidak']['recall'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['Tidak']['f1-score'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= $report['Tidak']['support'] ?></td>
-                                        </tr>
-                                        <tr class="text-center">
-                                            <th class="p-3 border border-[#E2B59A] text-left bg-[#B77466]/20">Ya (Penurunan)</th>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['Ya']['precision'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['Ya']['recall'],.2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['Ya']['f1-score'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= $report['Ya']['support'] ?></td>
-                                        </tr>
-                                        <tr class="text-center bg-gray-50 font-bold">
-                                            <th class="p-3 border border-[#E2B59A] text-left">Rata-rata (Weighted)</th>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['weighted avg']['precision'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['weighted avg']['recall'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= number_format($report['weighted avg']['f1-score'], 2) ?></td>
-                                            <td class="p-3 border border-[#E2B59A]"><?= $report['weighted avg']['support'] ?></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+        <!-- =================================================================== -->
+        <!-- RINGKASAN SINGKAT (4 KARTU) -->
+        <!-- =================================================================== -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-[#E2B59A]/40">
+                <span class="text-[11px] font-bold text-gray-400 uppercase block">Total Data Dianalisis</span>
+                <div class="text-xl sm:text-2xl font-black text-[#957C62] mt-0.5">
+                    <?= number_format($hasil['total_transaksi'] ?? 0, 0, ',', '.') ?> <span class="text-xs font-normal text-gray-500">struk</span>
                 </div>
             </div>
 
-        <?php else : ?>
-             <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-md" role="alert">
-                <p class="font-bold">Analisis Gagal</p>
-                <p>Skrip Python berhasil dijalankan tetapi mengembalikan error.</p>
-                <?php if(isset($hasil['message'])): ?>
-                    <p class="mt-2 text-sm"><strong>Detail Error:</strong> <?= esc($hasil['message']) ?></p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-[#E2B59A]/40">
+                <span class="text-[11px] font-bold text-gray-400 uppercase block">Rekomendasi Penataan</span>
+                <div class="text-xl sm:text-2xl font-black text-[#B77466] mt-0.5">
+                    <?= count($rekomendasi) ?> <span class="text-xs font-normal text-gray-500">pasang rak</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-[#E2B59A]/40">
+                <span class="text-[11px] font-bold text-gray-400 uppercase block">Pasangan Terbentuk</span>
+                <div class="text-xl sm:text-2xl font-black text-[#957C62] mt-0.5">
+                    <?= count($hasil['itemsets_2'] ?? []) ?> <span class="text-xs font-normal text-gray-500">kombinasi</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-[#E2B59A]/40">
+                <span class="text-[11px] font-bold text-gray-400 uppercase block">Standar Uji Digunakan</span>
+                <div class="text-xs sm:text-sm font-bold text-[#957C62] mt-1">
+                    Supp <?= $hasil['min_support'] ?>% &bull; Conf <?= $hasil['min_confidence'] ?>%
+                </div>
+                <span class="text-[11px] text-emerald-600 font-semibold">Min Lift <?= $hasil['min_lift'] ?></span>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- NAVIGASI 2 TAB UTAMA -->
+        <!-- =================================================================== -->
+        <div class="flex flex-col sm:flex-row gap-2 p-1.5 bg-white rounded-2xl border border-[#E2B59A]/50 shadow-sm mb-6">
+            <button type="button" @click="activeTab = 'rekomendasi'" 
+                    :class="activeTab === 'rekomendasi' ? 'bg-[#B77466] text-white shadow' : 'text-[#957C62] hover:bg-[#FFE1AF]/30'"
+                    class="flex-1 py-3 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                <span>Panduan Penataan Rak (Bahasa Awam)</span>
+            </button>
+
+            <button type="button" @click="activeTab = 'perhitungan'" 
+                    :class="activeTab === 'perhitungan' ? 'bg-[#B77466] text-white shadow' : 'text-[#957C62] hover:bg-[#FFE1AF]/30'"
+                    class="flex-1 py-3 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <span>Perhitungan Manual &amp; Cara Kerja Apriori</span>
+            </button>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: PANDUAN PENATAAN RAK (SEDERHANA & MUDAH DIPAHAMI) -->
+        <!-- =================================================================== -->
+        <div x-show="activeTab === 'rekomendasi'" x-transition.opacity>
+
+            <!-- 1. TOP 3 SIMULASI RAK PRIORITAS -->
+            <div class="bg-white rounded-3xl p-6 shadow-lg border border-[#E2B59A]/40 mb-6">
+                <div class="mb-5 pb-3 border-b border-gray-100">
+                    <h2 class="text-lg sm:text-xl font-black text-[#957C62]">3 Pasangan Produk Prioritas Utama</h2>
+                    <p class="text-xs text-gray-500">Barang-barang paling sering dibeli bersama yang disarankan ditata berdekatan di toko.</p>
+                </div>
+
+                <?php if (!empty($top3)): ?>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <?php foreach ($top3 as $idx => $rek): ?>
+                            <div class="bg-[#FFFDF9] rounded-2xl p-4 border-2 border-[#E2B59A] flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-xs font-black text-[#B77466]">PRIORITAS #<?= $idx + 1 ?></span>
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                            <?= $rek['lift'] ?>x Lebih Sering
+                                        </span>
+                                    </div>
+
+                                    <div class="bg-[#FFE1AF]/35 p-3 rounded-xl border border-[#E2B59A]/60 mb-3">
+                                        <div class="grid grid-cols-2 gap-2 text-center items-stretch">
+                                            <div class="bg-white p-2.5 rounded-lg border border-[#B77466] flex flex-col justify-center">
+                                                <span class="text-[9px] font-bold text-[#B77466] uppercase">Barang Utama</span>
+                                                <div class="text-xs font-bold text-gray-900 mt-0.5 leading-tight"><?= esc($rek['produk_utama']) ?></div>
+                                            </div>
+                                            <div class="bg-white p-2.5 rounded-lg border border-[#957C62] flex flex-col justify-center relative">
+                                                <span class="text-[9px] font-bold text-[#957C62] uppercase">Pendamping</span>
+                                                <div class="text-xs font-bold text-gray-900 mt-0.5 leading-tight"><?= esc($rek['produk_asosiasi']) ?></div>
+                                                <div class="absolute -left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#B77466] text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow">&harr;</div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full bg-[#957C62] h-1.5 rounded-full mt-2.5"></div>
+                                        <div class="text-center text-[10px] font-bold text-[#957C62] mt-1.5">
+                                            Taruh di: <?= esc($rek['posisi_rak']) ?>
+                                        </div>
+                                    </div>
+
+                                    <p class="text-xs text-gray-700 leading-relaxed mb-2">
+                                        <strong class="text-[#B77466]"><?= round($rek['confidence']) ?> dari 100 pembeli</strong> barang utama juga membeli pendampingnya.
+                                    </p>
+                                    <p class="text-[11px] text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 leading-relaxed">
+                                        <?= esc(str_replace(['**', '##'], '', $rek['saran_tata_letak'])) ?>
+                                    </p>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p class="text-center text-gray-500 py-6 text-xs">Tidak ada rekomendasi tata letak tersimpan.</p>
                 <?php endif; ?>
             </div>
-        <?php endif; ?>
+
+            <!-- 2. DAFTAR LENGKAP REKOMENDASI (RINGKAS + BISA DICARI) -->
+            <div class="bg-white rounded-3xl shadow-lg border border-[#E2B59A]/40 overflow-hidden mb-6">
+                <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-gray-50/50">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-black text-[#957C62]">Daftar Lengkap Saran Penataan Rak</h2>
+                        <p class="text-xs text-gray-500">Total <?= count($rekomendasi) ?> pasangan barang</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input type="text" x-model="searchRek" placeholder="Cari nama barang..." 
+                               class="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#B77466]">
+                        <select x-model="filterTipe" 
+                                class="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#B77466]">
+                            <option value="">Semua Jenis Penataan</option>
+                            <option value="sama">Satu Rak Bersebelahan</option>
+                            <option value="beda">Penataan Silang / Ujung Lorong</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs sm:text-sm text-left">
+                        <thead class="bg-gray-100 text-[#957C62] text-[11px] uppercase font-bold tracking-wider border-b">
+                            <tr>
+                                <th class="px-4 py-3 text-center w-12">No</th>
+                                <th class="px-4 py-3">Pasangan Produk (Taruh Berdekatan)</th>
+                                <th class="px-4 py-3">Posisi Rak Toko</th>
+                                <th class="px-4 py-3 text-center">Peluang Beli Bareng</th>
+                                <th class="px-4 py-3">Panduan Aksi untuk Penjaga Toko</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                            <?php foreach ($rekomendasi as $idx => $r) : ?>
+                                <?php $isSame = $r['is_same_category'] ?? ($r['kategori_utama'] === $r['kategori_asosiasi']); ?>
+                                <tr data-search="<?= strtolower(esc($r['produk_utama'] . ' ' . $r['produk_asosiasi'])) ?>"
+                                    x-show="(searchRek === '' || $el.dataset.search.includes(searchRek.toLowerCase())) && (filterTipe === '' || filterTipe === '<?= $isSame ? 'sama' : 'beda' ?>')"
+                                    class="hover:bg-[#FFE1AF]/20 transition">
+                                    <td class="px-4 py-3.5 text-center font-bold text-gray-400"><?= $idx + 1 ?></td>
+                                    <td class="px-4 py-3.5">
+                                        <div class="font-bold text-gray-900">
+                                            <?= esc($r['produk_utama']) ?> 
+                                            <span class="text-[#B77466] mx-1">&harr;</span> 
+                                            <span class="text-[#B77466]"><?= esc($r['produk_asosiasi']) ?></span>
+                                        </div>
+                                        <span class="text-[10px] text-gray-500">
+                                            <?= esc($r['kategori_utama']) ?> &bull; <?= esc($r['kategori_asosiasi']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 whitespace-nowrap">
+                                        <span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold <?= $isSame ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-blue-50 text-blue-800 border border-blue-200' ?>">
+                                            <?= $isSame ? 'Satu Rak Bersebelahan' : 'Ujung Lorong / Silang' ?>
+                                        </span>
+                                        <div class="text-[11px] text-gray-500 mt-0.5"><?= esc($r['posisi_rak']) ?></div>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                                        <div class="font-black text-[#B77466]"><?= round($r['confidence']) ?>% Pembeli</div>
+                                        <span class="text-[10px] font-bold text-emerald-700"><?= $r['lift'] ?>x lebih sering</span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-xs text-gray-600 leading-relaxed max-w-md">
+                                        <?= esc(str_replace(['**', '##'], '', $r['saran_tata_letak'])) ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. TIPS PRAKTIS RINGKAS -->
+            <div class="bg-white rounded-2xl p-5 border border-[#E2B59A]/40 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="flex items-start gap-3">
+                    <span class="text-lg">👁️</span>
+                    <div>
+                        <strong class="text-gray-900 block">Tinggi Pandangan Mata</strong>
+                        <span class="text-gray-600">Taruh barang prioritas di rak tengah (120–140 cm) agar paling mudah terlihat.</span>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-lg">🛒</span>
+                    <div>
+                        <strong class="text-gray-900 block">Keranjang Pelengkap</strong>
+                        <span class="text-gray-600">Untuk barang beda kategori, pasang gantungan kecil tepat di sebelah barang utama.</span>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-lg">📦</span>
+                    <div>
+                        <strong class="text-gray-900 block">Jaga Stok Bersamaan</strong>
+                        <span class="text-gray-600">Pastikan stok barang utama dan pendamping terisi bersamaan agar tidak kehabisan.</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: PERHITUNGAN MANUAL & CARA KERJA APRIORI (TEKNIS) -->
+        <!-- =================================================================== -->
+        <div x-show="activeTab === 'perhitungan'" x-transition.opacity style="display: none;">
+
+            <!-- 1. ALUR KERJA 5 TAHAP -->
+            <div class="bg-white rounded-3xl p-6 shadow-lg border border-[#E2B59A]/40 mb-6">
+                <h2 class="text-lg font-black text-[#957C62] mb-4">Alur Kerja Algoritma Apriori (5 Tahap)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                    <div class="p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]">
+                        <span class="font-black text-[#B77466] block mb-1">1. Data Transaksi (N)</span>
+                        <p class="text-gray-600">Membaca total <strong><?= $hasil['total_transaksi'] ?> struk</strong> keranjang belanja.</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]">
+                        <span class="font-black text-[#B77466] block mb-1">2. Seleksi 1-Item (L1)</span>
+                        <p class="text-gray-600">Hitung frekuensi per produk. Minimal <?= $hasil['min_support_count'] ?? 16 ?> transaksi (&ge; <?= $hasil['min_support'] ?>%) lolos ke <strong>L1 (<?= count($hasil['itemsets_1'] ?? []) ?> item)</strong>.</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]">
+                        <span class="font-black text-[#B77466] block mb-1">3. Pasangan 2-Item (L2)</span>
+                        <p class="text-gray-600">Gabungkan item L1 menjadi pasangan. Pasangan yang sering muncul lolos ke <strong>L2 (<?= count($hasil['itemsets_2'] ?? []) ?> pasang)</strong>.</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]">
+                        <span class="font-black text-[#B77466] block mb-1">4. Aturan Asosiasi</span>
+                        <p class="text-gray-600">Uji aturan <code class="bg-gray-100 px-1 rounded">A &rarr; B</code>. Hanya yang memiliki Confidence &ge; <strong><?= $hasil['min_confidence'] ?>%</strong> yang lolos.</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]">
+                        <span class="font-black text-[#B77466] block mb-1">5. Uji Validitas Lift</span>
+                        <p class="text-gray-600">Uji kekuatan korelasi. Nilai <strong>Lift &gt; 1.0</strong> menghasilkan <strong><?= $hasil['total_rules'] ?? 0 ?> aturan valid</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. RUMUS MATEMATIKA + STUDI KASUS PERHITUNGAN MANUAL -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                
+                <div class="bg-white rounded-3xl p-6 shadow-lg border border-[#E2B59A]/40 space-y-4">
+                    <h3 class="text-base font-black text-[#957C62] border-b border-gray-100 pb-2">Rumus Matematika Apriori</h3>
+                    
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
+                        <strong class="text-[#B77466] block mb-1">1. Support (Dukungan)</strong>
+                        <div class="font-mono text-[11px] bg-white p-2 rounded border text-gray-800">
+                            Supp(A) = (&sum;Trx A / N) &times; 100%<br>
+                            Supp(A&cup;B) = (&sum;Trx A&amp;B / N) &times; 100%
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
+                        <strong class="text-[#B77466] block mb-1">2. Confidence (Kepastian)</strong>
+                        <div class="font-mono text-[11px] bg-white p-2 rounded border text-gray-800">
+                            Conf(A&rarr;B) = (&sum;Trx A&amp;B / &sum;Trx A) &times; 100%
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
+                        <strong class="text-[#B77466] block mb-1">3. Lift Ratio (Korelasi)</strong>
+                        <div class="font-mono text-[11px] bg-white p-2 rounded border text-gray-800">
+                            Lift = Supp(A&cup;B) / (Supp(A) &times; Supp(B))
+                        </div>
+                        <span class="text-[10px] text-emerald-700 font-bold block mt-1">Catatan: Lift &gt; 1 = Hubungan Positif (Valid)</span>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-lg border border-[#E2B59A]/40">
+                    <?php if (!empty($kasus)): ?>
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3 mb-4">
+                            <div>
+                                <h3 class="text-base font-black text-[#957C62]">Contoh Perhitungan Manual (Data Nyata #1)</h3>
+                                <p class="text-xs text-gray-500">Aturan: <strong><?= esc($kasus['item_a']) ?></strong> &rarr; <strong><?= esc($kasus['item_b']) ?></strong></p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">Valid &bull; Lift <?= $kasus['lift'] ?></span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs bg-amber-50/70 p-3 rounded-xl border border-amber-200/70">
+                            <div>Populasi (N): <strong><?= $kasus['n_total'] ?></strong></div>
+                            <div>Frekuensi A: <strong><?= $kasus['count_a'] ?></strong></div>
+                            <div>Frekuensi B: <strong><?= $kasus['count_b'] ?></strong></div>
+                            <div>Bersama (A&cap;B): <strong><?= $kasus['count_ab'] ?></strong></div>
+                        </div>
+
+                        <div class="space-y-2.5 text-xs font-mono text-gray-800">
+                            <div class="p-2.5 rounded-xl bg-gray-50 border flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <span><strong>Langkah 1 (Support A &amp; B):</strong> (<?= $kasus['count_a'] ?>/<?= $kasus['n_total'] ?>)=<strong><?= $kasus['supp_a'] ?>%</strong> | (<?= $kasus['count_b'] ?>/<?= $kasus['n_total'] ?>)=<strong><?= $kasus['supp_b'] ?>%</strong></span>
+                                <span class="text-emerald-700 font-sans font-bold">Lolos L1</span>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-gray-50 border flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <span><strong>Langkah 2 (Support Pasangan):</strong> (<?= $kasus['count_ab'] ?> / <?= $kasus['n_total'] ?>) &times; 100% = <strong><?= $kasus['supp_ab'] ?>%</strong></span>
+                                <span class="text-emerald-700 font-sans font-bold">Lolos L2 (&ge;<?= $kasus['min_support_pct'] ?>%)</span>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-gray-50 border flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <span><strong>Langkah 3 (Confidence A&rarr;B):</strong> (<?= $kasus['count_ab'] ?> / <?= $kasus['count_a'] ?>) &times; 100% = <strong><?= $kasus['confidence'] ?>%</strong></span>
+                                <span class="text-emerald-700 font-sans font-bold">Lolos (&ge;<?= $kasus['min_conf_pct'] ?>%)</span>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-gray-50 border flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <span><strong>Langkah 4 (Lift Ratio):</strong> <?= ($kasus['supp_ab']/100) ?> / (<?= ($kasus['supp_a']/100) ?> &times; <?= ($kasus['supp_b']/100) ?>) = <strong><?= $kasus['lift'] ?></strong></span>
+                                <span class="text-emerald-700 font-sans font-bold">Korelasi Kuat (&gt;1.0)</span>
+                            </div>
+                        </div>
+
+                        <p class="mt-3 text-xs text-emerald-900 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed">
+                            <strong>Kesimpulan:</strong> Karena Support (<?= $kasus['supp_ab'] ?>%), Confidence (<?= $kasus['confidence'] ?>%), dan Lift (<?= $kasus['lift'] ?>) semuanya melampaui ambang batas, aturan ini valid secara matematis.
+                        </p>
+                    <?php else: ?>
+                        <p class="text-center text-gray-500 py-8 text-xs">Data studi kasus belum tersedia.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- 3. TABEL DATA RINCIAN TEKNIS -->
+            <div class="bg-white rounded-3xl shadow-lg border border-[#E2B59A]/40 overflow-hidden mb-8">
+                <div class="p-4 bg-[#957C62] text-white flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-1.5 bg-black/20 p-1 rounded-xl text-xs">
+                        <button type="button" @click="subTabTeknis = 'rules'" 
+                                :class="subTabTeknis === 'rules' ? 'bg-white text-[#957C62] font-bold shadow' : 'text-white/80 hover:text-white'"
+                                class="px-3 py-1.5 rounded-lg transition">
+                            Aturan Asosiasi (<?= count($hasil['rules'] ?? []) ?>)
+                        </button>
+                        <button type="button" @click="subTabTeknis = 'l2'" 
+                                :class="subTabTeknis === 'l2' ? 'bg-white text-[#957C62] font-bold shadow' : 'text-white/80 hover:text-white'"
+                                class="px-3 py-1.5 rounded-lg transition">
+                            Frequent L2 (<?= count($hasil['itemsets_2'] ?? []) ?>)
+                        </button>
+                        <button type="button" @click="subTabTeknis = 'l1'" 
+                                :class="subTabTeknis === 'l1' ? 'bg-white text-[#957C62] font-bold shadow' : 'text-white/80 hover:text-white'"
+                                class="px-3 py-1.5 rounded-lg transition">
+                            Frequent L1 (<?= count($hasil['itemsets_1'] ?? []) ?>)
+                        </button>
+                        <?php if (!empty($c1Lengkap)): ?>
+                        <button type="button" @click="subTabTeknis = 'c1'" 
+                                :class="subTabTeknis === 'c1' ? 'bg-white text-[#957C62] font-bold shadow' : 'text-white/80 hover:text-white'"
+                                class="px-3 py-1.5 rounded-lg transition">
+                            Seleksi C1 (<?= count($c1Lengkap) ?>)
+                        </button>
+                        <?php endif; ?>
+                    </div>
+
+                    <input type="text" x-model="searchTeknis" placeholder="Cari produk dalam tabel teknis..." 
+                           class="px-3 py-1.5 rounded-xl bg-white text-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-[#B77466] w-full lg:w-64">
+                </div>
+
+                <div x-show="subTabTeknis === 'rules'" class="overflow-x-auto max-h-[450px] overflow-y-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead class="sticky top-0 bg-gray-100 text-[#957C62] uppercase font-bold border-b z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-center">No</th>
+                                <th class="px-4 py-3">Aturan (Antecedent &rarr; Consequent)</th>
+                                <th class="px-4 py-3 text-center">Support</th>
+                                <th class="px-4 py-3 text-center">Confidence</th>
+                                <th class="px-4 py-3 text-center">Lift Ratio</th>
+                                <th class="px-4 py-3 text-center">Korelasi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                            <?php foreach (($hasil['rules'] ?? []) as $idx => $rule) : ?>
+                                <tr data-search="<?= strtolower(esc($rule['antecedent'] . ' ' . $rule['consequent'])) ?>"
+                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                    class="hover:bg-[#FFE1AF]/20">
+                                    <td class="px-4 py-2.5 text-center font-bold text-gray-400"><?= $idx + 1 ?></td>
+                                    <td class="px-4 py-2.5">
+                                        JIKA <strong class="text-[#B77466]"><?= esc($rule['antecedent']) ?></strong> &rarr; MAKA <strong class="text-[#957C62]"><?= esc($rule['consequent']) ?></strong>
+                                    </td>
+                                    <td class="px-4 py-2.5 text-center"><?= $rule['support'] ?>% (<?= $rule['jumlah_transaksi'] ?? 0 ?>)</td>
+                                    <td class="px-4 py-2.5 text-center font-bold"><?= $rule['confidence'] ?>%</td>
+                                    <td class="px-4 py-2.5 text-center font-black text-emerald-700"><?= $rule['lift'] ?></td>
+                                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border <?= $rule['badge_color'] ?? 'bg-emerald-100 text-emerald-800' ?>">
+                                            <?= $rule['korelasi'] ?? 'Korelasi Positif' ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div x-show="subTabTeknis === 'l2'" class="overflow-x-auto max-h-[450px] overflow-y-auto" style="display: none;">
+                    <table class="w-full text-xs text-left">
+                        <thead class="sticky top-0 bg-gray-100 text-[#957C62] uppercase font-bold border-b z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-center">No</th>
+                                <th class="px-4 py-3">Pasangan Produk (L2)</th>
+                                <th class="px-4 py-3 text-center">Transaksi Bersama</th>
+                                <th class="px-4 py-3 text-right">Support (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                            <?php foreach (($hasil['itemsets_2'] ?? []) as $idx => $it2): ?>
+                                <tr data-search="<?= strtolower(esc($it2['item_a'] . ' ' . $it2['item_b'])) ?>"
+                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                    class="hover:bg-[#FFE1AF]/20">
+                                    <td class="px-4 py-2.5 text-center font-bold text-gray-400"><?= $idx + 1 ?></td>
+                                    <td class="px-4 py-2.5 font-bold text-gray-900">
+                                        <?= esc($it2['item_a']) ?> <span class="text-[#B77466]">+</span> <?= esc($it2['item_b']) ?>
+                                    </td>
+                                    <td class="px-4 py-2.5 text-center font-semibold"><?= $it2['jumlah_transaksi'] ?> struk</td>
+                                    <td class="px-4 py-2.5 text-right font-black text-[#B77466]"><?= $it2['support'] ?>%</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div x-show="subTabTeknis === 'l1'" class="overflow-x-auto max-h-[450px] overflow-y-auto" style="display: none;">
+                    <table class="w-full text-xs text-left">
+                        <thead class="sticky top-0 bg-gray-100 text-[#957C62] uppercase font-bold border-b z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-center">No</th>
+                                <th class="px-4 py-3">Nama Produk (L1)</th>
+                                <th class="px-4 py-3">Kategori</th>
+                                <th class="px-4 py-3 text-center">Frekuensi</th>
+                                <th class="px-4 py-3 text-right">Support (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                            <?php foreach (($hasil['itemsets_1'] ?? []) as $idx => $it1): ?>
+                                <tr data-search="<?= strtolower(esc($it1['nama'] ?? $it1['item'] ?? '')) ?>"
+                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                    class="hover:bg-[#FFE1AF]/20">
+                                    <td class="px-4 py-2.5 text-center font-bold text-gray-400"><?= $idx + 1 ?></td>
+                                    <td class="px-4 py-2.5 font-bold text-gray-900"><?= esc($it1['nama'] ?? $it1['item'] ?? '') ?></td>
+                                    <td class="px-4 py-2.5 text-gray-500"><?= esc($it1['kategori'] ?? 'Sembako') ?></td>
+                                    <td class="px-4 py-2.5 text-center font-semibold"><?= $it1['jumlah_transaksi'] ?> struk</td>
+                                    <td class="px-4 py-2.5 text-right font-black text-[#B77466]"><?= $it1['support'] ?>%</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <?php if (!empty($c1Lengkap)): ?>
+                <div x-show="subTabTeknis === 'c1'" class="overflow-x-auto max-h-[450px] overflow-y-auto" style="display: none;">
+                    <table class="w-full text-xs text-left">
+                        <thead class="sticky top-0 bg-gray-100 text-[#957C62] uppercase font-bold border-b z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-center">No</th>
+                                <th class="px-4 py-3">Calon Produk (C1)</th>
+                                <th class="px-4 py-3 text-center">Frekuensi</th>
+                                <th class="px-4 py-3 text-right">Support (%)</th>
+                                <th class="px-4 py-3 text-center">Status Seleksi L1</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                            <?php foreach ($c1Lengkap as $idx => $c1): ?>
+                                <?php $isLolos = ($c1['status'] ?? '') === 'Lolos L1'; ?>
+                                <tr data-search="<?= strtolower(esc($c1['nama'] ?? '')) ?>"
+                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                    class="hover:bg-[#FFE1AF]/20">
+                                    <td class="px-4 py-2.5 text-center font-bold text-gray-400"><?= $idx + 1 ?></td>
+                                    <td class="px-4 py-2.5 font-medium text-gray-900"><?= esc($c1['nama'] ?? '') ?></td>
+                                    <td class="px-4 py-2.5 text-center"><?= $c1['jumlah_transaksi'] ?> struk</td>
+                                    <td class="px-4 py-2.5 text-right font-bold"><?= $c1['support'] ?>%</td>
+                                    <td class="px-4 py-2.5 text-center">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $isLolos ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200' ?>">
+                                            <?= esc($c1['status']) ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+
+            </div>
+
+        </div>
 
     </div>
 </div>
-
-<!-- JavaScript Sederhana untuk Tab (Warna Baru) -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabs = document.querySelectorAll('.tab-button');
-        const contents = document.querySelectorAll('.tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const target = tab.dataset.tabTarget;
-
-                // Nonaktifkan semua tab
-                tabs.forEach(t => {
-                    t.classList.remove('active', 'bg-[#B77466]', 'text-white', 'shadow');
-                    t.classList.add('text-gray-500', 'hover:bg-[#FFE1AF]/40', 'hover:text-[#957C62]');
-                });
-
-                // Aktifkan tab yang diklik
-                tab.classList.add('active', 'bg-[#B77466]', 'text-white', 'shadow');
-                tab.classList.remove('text-gray-500', 'hover:bg-[#FFE1AF]/40', 'hover:text-[#957C62]');
-
-                // Sembunyikan semua konten
-                contents.forEach(c => {
-                    c.classList.add('hidden');
-                });
-
-                // Tampilkan konten yang targetnya sesuai
-                document.getElementById(target).classList.remove('hidden');
-            });
-        });
-    });
-</script>
 
 <?= $this->endSection(); ?>

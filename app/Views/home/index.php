@@ -1,214 +1,404 @@
+<?php helper(['url']); ?>
 <?= $this->extend('layout/layout'); ?>
 <?= $this->section('content'); ?>
 
-<!-- 
-    CSS Kustom untuk animasi (Diambil dari contoh Anda)
--->
+<?php
+    $username    = session()->get('username') ?: 'Pemilik Toko';
+    $maxProdJml  = !empty($topProduk) ? max(1, (int)$topProduk[0]['jumlah']) : 1;
+    $maxKatJml   = !empty($topKategori) ? max(1, (int)$topKategori[0]['jumlah']) : 1;
+?>
+
+<!-- CSS Kustom Animasi Dashboard Modern -->
 <style>
-    /* Animasi gambar naik-turun */
-    @keyframes float {
-        0% {
-            transform: translateY(0px);
-        }
-        50% {
-            transform: translateY(-20px);
-        }
-        100% {
-            transform: translateY(0px);
-        }
+    @keyframes floatSlow {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
     }
-
     .animate-float {
-        animation: float 6s ease-in-out infinite;
+        animation: floatSlow 4.5s ease-in-out infinite;
     }
-
-    /* Style untuk kursor TypewriterJS */
-    .Typewriter__cursor {
-        color: #B77466; /* Disesuaikan dengan palet warna Anda */
-        font-weight: bold;
-        animation: blink 0.7s infinite;
+    @keyframes dashMove {
+        to { stroke-dashoffset: -12; }
     }
-
-    @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0; }
-        100% { opacity: 1; }
+    .animate-dash {
+        animation: dashMove 1.2s linear infinite;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+        animation: fadeInUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .delay-100 { animation-delay: 0.08s; }
+    .delay-200 { animation-delay: 0.16s; }
+    .delay-300 { animation-delay: 0.24s; }
+    @keyframes growBar {
+        from { width: 0; }
+    }
+    .animate-bar {
+        animation: growBar 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 </style>
 
-<!-- Latar belakang: #FFE1AF (Krem) - WARNA SOLID -->
-<div class="w-full min-h-screen bg-[#FFE1AF] p-4 lg:p-8 text-[#957C62]">
-    <div class="container mx-auto max-w-5xl">
+<div class="w-full min-h-screen bg-[#FFE1AF] py-6 px-4 sm:px-6 lg:px-8 text-[#957C62]" 
+     x-data="{ chartTab: 'produk' }">
+    <div class="container mx-auto max-w-7xl space-y-6">
 
-        <!-- ======================= -->
-        <!-- Hero Section (Tengah, Menggunakan Gambar PNG) -->
-        <!-- ======================= -->
-        <section class="py-24 text-center">
-            
-            <!-- Ikon PNG (DENGAN ANIMASI FLOAT) -->
-            <div class="w-64 h-64 mx-auto mb-8 flex items-center justify-center p-6">
-                <img src="<?= base_url('public/belanja.png') ?>" 
-                     alt="Ikon Analisis" 
-                     class="w-full h-full animate-float"> <!-- class 'animate-float' ditambahkan -->
-            </div>
+        <!-- =================================================================== -->
+        <!-- 1. HERO BANNER DASHBOARD MODERN + SVG RAK TATA LETAK ANIMASI -->
+        <!-- =================================================================== -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 lg:px-10 shadow-lg border border-[#E2B59A]/40 relative overflow-hidden animate-fade-up">
+            <!-- Dekorasi Latar Belakang Halus -->
+            <div class="hidden lg:block absolute -right-12 -top-12 w-72 h-72 rounded-full bg-[#FFE1AF]/45 pointer-events-none"></div>
+            <div class="hidden lg:block absolute right-36 -bottom-16 w-44 h-44 rounded-full bg-[#E2B59A]/20 pointer-events-none"></div>
 
-            <!-- Kolom Teks (Tengah, DENGAN TYPEWRITER) -->
-            <!-- ID ditambahkan, min-h untuk mencegah layout shift, teks dikosongkan -->
-            <h1 id="typewriter-h1" class="text-4xl md:text-5xl font-bold text-[#957C62] leading-tight min-h-[110px] md:min-h-[120px]">
-                <!-- Teks akan diisi oleh JavaScript -->
-            </h1>
-            <p class="mt-4 text-lg md:text-xl text-[#B77466] max-w-2xl mx-auto">
-                Sebuah aplikasi untuk mengidentifikasi pola penjualan menggunakan algoritma <span class="font-bold">Naive Bayes</span>.
-            </p>
-            
-            <!-- Tombol Aksi (CTA) -->
-            <a href="<?= base_url('/analisis') ?>" class="mt-10 inline-block bg-[#B77466] hover:bg-[#957C62] text-white font-bold py-4 px-10 rounded-lg transition duration-300 shadow-lg text-lg transform hover:scale-105">
-                Mulai Analisis
-            </a>
-        </section>
+            <div class="relative z-10 flex flex-col-reverse lg:flex-row lg:items-center justify-between gap-8">
+                <!-- Kolom Kiri: Sapaan, Deskripsi & Tombol Aksi -->
+                <div class="flex-1 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFE1AF]/70 border border-[#E2B59A] text-[11px] font-bold text-[#957C62] mb-3">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span>Sistem Tata Letak Toko Sembako &bull; Algoritma Apriori</span>
+                    </div>
 
-        <!-- ======================= -->
-        <!-- Tentang Proyek Section -->
-        <!-- ======================= -->
-        <section class="py-16">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                
-                <!-- Kolom Gambar -->
-                <div class="flex justify-center items-center">
-                    <img src="<?= base_url('public/market.png') ?>" 
-                         alt="Ilustrasi Data" 
-                         class=" w-full max-w-md"
-                         onerror="this.src='https://placehold.co/400x400/E2B59A/957C62?text=Ilustrasi+Data'; this.onerror=null;">
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-[#957C62] leading-tight">
+                        Selamat Datang, <span class="text-[#B77466]"><?= esc(ucfirst($username)) ?></span>
+                    </h1>
+                    <p class="text-xs sm:text-sm text-gray-600 mt-2.5 leading-relaxed">
+                        Implementasi Algoritma Apriori untuk Rekomendasi Tata Letak Produk Berdasarkan Pola Pembelian Konsumen. Pantau data belanja, produk terlaris, dan saran posisi rak secara langsung di sini.
+                    </p>
+
+                    <!-- Aksi Cepat Utama -->
+                    <div class="mt-6 flex flex-wrap items-center gap-3">
+                        <a href="<?= base_url('/rekomendasi') ?>" 
+                           class="inline-flex items-center gap-2 bg-[#B77466] hover:bg-[#957C62] text-white font-bold px-5 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 text-xs sm:text-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"/>
+                            </svg>
+                            <span>Cari Rekomendasi Rak</span>
+                        </a>
+
+                        <a href="<?= base_url('/dataset') ?>" 
+                           class="inline-flex items-center gap-2 bg-[#FFE1AF]/60 hover:bg-[#FFE1AF] text-[#957C62] border border-[#E2B59A] font-bold px-5 py-3 rounded-2xl transition-all duration-300 transform hover:-translate-y-0.5 text-xs sm:text-sm">
+                            <svg class="w-4 h-4 text-[#B77466]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <span>Kelola Data &amp; CSV</span>
+                        </a>
+                    </div>
                 </div>
-                
-                <!-- Kolom Teks -->
+
+                <!-- Kolom Kanan: Ilustrasi SVG Rak Display Tata Letak dengan Animasi Mengambang & Garis Asosiasi Bergerak -->
+                <div class="flex justify-center shrink-0">
+                    <div class="w-40 h-40 sm:w-48 sm:h-48 lg:w-52 lg:h-52 flex items-center justify-center animate-float">
+                        <svg class="w-full h-full drop-shadow-xl" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="56" fill="#FFFFFF" stroke="#E2B59A" stroke-width="2"/>
+                            <circle cx="60" cy="60" r="48" fill="#FFE1AF" fill-opacity="0.5"/>
+                            
+                            <!-- Tiang Rak Toko -->
+                            <rect x="25" y="27" width="4.5" height="66" rx="2.25" fill="#957C62"/>
+                            <rect x="90.5" y="27" width="4.5" height="66" rx="2.25" fill="#957C62"/>
+                            <rect x="22" y="24" width="76" height="6" rx="3" fill="#B77466"/>
+                            
+                            <!-- Tingkat 1 (Atas) -->
+                            <rect x="27" y="45" width="66" height="3.5" rx="1.75" fill="#957C62"/>
+                            <rect x="34" y="33" width="9" height="12" rx="2" fill="#B77466"/>
+                            <rect x="46" y="35" width="8" height="10" rx="1.5" fill="#E2B59A"/>
+                            <rect x="57" y="32" width="10" height="13" rx="2" fill="#B77466"/>
+                            <rect x="70" y="34" width="8" height="11" rx="1.5" fill="#E2B59A"/>
+                            
+                            <!-- Tingkat 2 (Tengah) - Produk Asosiasi Berdampingan -->
+                            <rect x="27" y="67" width="66" height="3.5" rx="1.75" fill="#957C62"/>
+                            <rect x="33" y="54" width="11" height="13" rx="2" fill="#E2B59A"/>
+                            <rect x="47" y="53" width="10" height="14" rx="2" fill="#B77466"/>
+                            <!-- Highlight Rekomendasi Berdampingan -->
+                            <rect x="60" y="51" width="12" height="16" rx="2" fill="#B77466" stroke="#957C62" stroke-width="1.5"/>
+                            <rect x="75" y="54" width="10" height="13" rx="1.5" fill="#E2B59A"/>
+                            
+                            <!-- Tingkat 3 (Bawah) -->
+                            <rect x="27" y="89" width="66" height="3.5" rx="1.75" fill="#957C62"/>
+                            <rect x="33" y="76" width="13" height="13" rx="2" fill="#B77466"/>
+                            <rect x="49" y="78" width="10" height="11" rx="2" fill="#E2B59A"/>
+                            <rect x="62" y="76" width="9" height="13" rx="2" fill="#957C62"/>
+                            
+                            <!-- Garis Asosiasi Apriori Animasi -->
+                            <path d="M 38 39 C 20 54, 28 64, 58 60" stroke="#B77466" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" class="animate-dash"/>
+                            <polygon points="61,60 55,57 56,63" fill="#B77466"/>
+
+                            <!-- Badge Keranjang Belanja Konsumen -->
+                            <g transform="translate(68, 68)">
+                                <circle cx="22" cy="22" r="18" fill="#B77466" stroke="#ffffff" stroke-width="2.5"/>
+                                <path d="M14 15h3l2.2 8h8.8l2-6H19" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="20.5" cy="25.5" r="1.5" fill="#ffffff"/>
+                                <circle cx="26.5" cy="25.5" r="1.5" fill="#ffffff"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- 2. BARIS KPI METRIK REAL-TIME (4 KARTU BENTO DENGAN ANIMASI HOVER) -->
+        <!-- =================================================================== -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up delay-100">
+            <!-- KPI 1: Master Produk -->
+            <a href="<?= base_url('/dataset?tab=produk') ?>" class="bg-white p-5 rounded-3xl shadow-sm hover:shadow-md border border-[#E2B59A]/40 transition-all duration-300 hover:-translate-y-1 group flex items-center justify-between">
                 <div>
-                    <h2 class="text-3xl font-bold text-[#957C62] mb-4">Tentang Proyek Ini</h2>
-                    <p class="text-gray-700 mb-4 leading-relaxed">
-                        Aplikasi ini dibangun sebagai bagian dari penelitian skripsi untuk menerapkan algoritma Naive Bayes. Tujuannya adalah untuk menganalisis data penjualan produk minimarket dari periode 2020 hingga 2023.
-                    </p>
-                    <p class="text-gray-700 leading-relaxed">
-                        Selain memprediksi, fokus utama aplikasi ini adalah untuk menganalisis (sesuai Rumusan Masalah) faktor-faktor apa saja yang ditemukan oleh model sebagai pemicu terjadinya penurunan penjualan.
-                    </p>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ======================= -->
-        <!-- Metode Naive Bayes Section -->
-        <!-- ======================= -->
-        <section class="py-16 text-center">
-            <div>
-                <h2 class="text-3xl font-bold text-[#957C62] mb-4">Bagaimana Cara Kerjanya?</h2>
-                <p class="text-gray-700 max-w-3xl mx-auto mb-12">
-                    Metodologi ini menghitung probabilitas (peluang) dari setiap fitur untuk menemukan faktor penentu.
-                </p>
-            </div>
-            
-            <!-- Kartu 3 Langkah (Solid) -->
-            <div class="grid sm:grid-cols-1 md:grid-cols-3 gap-8">
-                
-                <!-- Step 1 (Gambar PNG) -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-[#E2B59A]">
-                    <div class="w-16 h-16 p-3 bg-[#FFE1AF] rounded-full mx-auto mb-6 flex items-center justify-center">
-                        <img src="<?= base_url('public/images/icon_db.png') ?>" 
-                             alt="Database" 
-                             class="w-10 h-10"
-                             onerror="this.src='https://placehold.co/64x64/FFE1AF/B77466?text=DB'; this.onerror=null;">
+                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Master Produk</span>
+                    <div class="text-2xl sm:text-3xl font-black text-[#957C62] mt-1 group-hover:text-[#B77466] transition">
+                        <?= number_format($totalProduk, 0, ',', '.') ?>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">1. Ambil & Proses Data</h3>
-                    <p class="text-gray-600">Data diambil dari tabel `dataset_produk`, kemudian teks diubah menjadi angka (Encoding) dan nilai numerik disamakan skalanya (Scaling).</p>
+                    <span class="text-[11px] text-gray-500 mt-0.5 block">Barang sembako aktif</span>
                 </div>
-                
-                <!-- Step 2 (Gambar PNG) -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-[#B77466]">
-                     <div class="w-16 h-16 p-3 bg-[#FFE1AF] rounded-full mx-auto mb-6 flex items-center justify-center">
-                        <img src="<?= base_url('public/images/icon_model.png') ?>" 
-                             alt="Model" 
-                             class="w-10 h-10"
-                             onerror="this.src='https://placehold.co/64x64/FFE1AF/B77466?text=AI'; this.onerror=null;">
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">2. Latih Model (80%)</h3>
-                    <p class="text-gray-600">Model `Gaussian Naive Bayes` 'belajar' dari 80% data untuk menghitung rata-rata (theta) dari setiap fitur untuk kelas 'Ya Turun' dan 'Tidak Turun'.</p>
+                <div class="w-11 h-11 rounded-2xl bg-[#FFE1AF]/70 text-[#B77466] flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
                 </div>
-                
-                <!-- Step 3 (Gambar PNG) -->
-                <div class="bg-white p-8 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-t-4 border-[#E2B59A]">
-                     <div class="w-16 h-16 p-3 bg-[#FFE1AF] rounded-full mx-auto mb-6 flex items-center justify-center">
-                        <img src="<?= base_url('public/images/icon_hasil.png') ?>" 
-                             alt="Hasil" 
-                             class="w-10 h-10"
-                             onerror="this.src='https://placehold.co/64x64/FFE1AF/B77466?text=Hasil'; this.onerror=null;">
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">3. Analisis Hasil (20%)</h3>
-                    <p class="text-gray-600">Model diuji pada 20% data sisa untuk mengukur akurasi. Faktor-faktor (rata-rata) yang telah dipelajari model kemudian diekstrak dan ditampilkan.</p>
-                </div>
-            </div>
-        </section>
+            </a>
 
-        <!-- ======================= -->
-        <!-- Disclaimer Section -->
-        <!-- ======================= -->
-        <section class="py-16">
-            <div>
-                <!-- Kartu Solid (TANPA BLUR) -->
-                <div class="bg-white border-l-8 border-[#B77466] rounded-2xl shadow-xl text-left p-8 md:p-12">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <!-- Ikon Info (Gambar PNG) -->
-                            <img src="<?= base_url('public/images/icon_info.png') ?>" 
-                                 alt="Info" 
-                                 class="w-10 h-10"
-                                 onerror="this.src='https://placehold.co/40x40/B77466/FFFFFF?text=!'; this.onerror=null;">
-                        </div>
+            <!-- KPI 2: Struk Belanja -->
+            <a href="<?= base_url('/dataset?tab=transaksi') ?>" class="bg-white p-5 rounded-3xl shadow-sm hover:shadow-md border border-[#E2B59A]/40 transition-all duration-300 hover:-translate-y-1 group flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Struk Transaksi</span>
+                    <div class="text-2xl sm:text-3xl font-black text-[#B77466] mt-1">
+                        <?= number_format($totalStruk, 0, ',', '.') ?>
+                    </div>
+                    <span class="text-[11px] text-gray-500 mt-0.5 block">Keranjang belanja</span>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-[#FFE1AF]/70 text-[#B77466] flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- KPI 3: Item Tertransaksi -->
+            <a href="<?= base_url('/dataset?tab=transaksi') ?>" class="bg-white p-5 rounded-3xl shadow-sm hover:shadow-md border border-[#E2B59A]/40 transition-all duration-300 hover:-translate-y-1 group flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Total Item Dibeli</span>
+                    <div class="text-2xl sm:text-3xl font-black text-[#957C62] mt-1 group-hover:text-[#B77466] transition">
+                        <?= number_format($totalItemTrx, 0, ',', '.') ?>
+                    </div>
+                    <span class="text-[11px] text-gray-500 mt-0.5 block">Periode Sept–Nov 2027</span>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-[#FFE1AF]/70 text-[#B77466] flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- KPI 4: Riwayat Tersimpan -->
+            <a href="<?= base_url('/history') ?>" class="bg-white p-5 rounded-3xl shadow-sm hover:shadow-md border border-[#E2B59A]/40 transition-all duration-300 hover:-translate-y-1 group flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Riwayat Analisis</span>
+                    <div class="text-2xl sm:text-3xl font-black text-[#957C62] mt-1 group-hover:text-[#B77466] transition">
+                        <?= number_format($totalRiwayat, 0, ',', '.') ?>
+                    </div>
+                    <span class="text-[11px] text-gray-500 mt-0.5 block">Laporan tersimpan</span>
+                </div>
+                <div class="w-11 h-11 rounded-2xl bg-[#FFE1AF]/70 text-[#B77466] flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </a>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- 3. BENTO GRID UTAMA: PRATINJAU RAK (7 KOLOM) & ANALITIK LAKU (5 KOLOM) -->
+        <!-- =================================================================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch animate-fade-up delay-200">
+
+            <!-- KOLOM KIRI (7 KOLOM): SPOTLIGHT REKOMENDASI TATA LETAK RAK -->
+            <div class="lg:col-span-7 bg-white rounded-3xl p-6 shadow-md border border-[#E2B59A]/40 flex flex-col justify-between">
+                <div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-gray-100 mb-5">
                         <div>
-                            <h2 class="text-2xl font-bold text-[#957C62] mb-4">Batasan Penelitian</h2>
-                            <p class="text-gray-700 max-w-3xl leading-relaxed">
-                                Sesuai batasan masalah, hasil dari aplikasi ini bersifat akademis dan terbatas pada:
-                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                                    <li>Penerapan algoritma <strong>Naive Bayes</strong> (tidak ada perbandingan algoritma).</li>
-                                    <li>Data penjualan produk minimarket dari periode <strong>2020 - 2023</strong>.</li>
-                                    <li>Atribut yang digunakan (Harga, Kategori, Promosi, dll.) yang ada di dataset.</li>
-                                </ul>
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-black text-[#957C62]">Pratinjau Penataan Rak Terkuat</h2>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $sumberRekomendasi === 'history' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700' ?>">
+                                    <?= $sumberRekomendasi === 'history' ? 'Dari Riwayat Terbaru' : 'Analisis Langsung' ?>
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5">Pasangan produk dengan kecenderungan dibeli bersama paling tinggi</p>
                         </div>
+
+                        <a href="<?= base_url('/rekomendasi') ?>" class="text-xs font-bold text-[#B77466] hover:text-[#957C62] inline-flex items-center gap-1 shrink-0">
+                            <span>Buka Rekomendasi Lengkap</span>
+                            <span>&rarr;</span>
+                        </a>
                     </div>
+
+                    <?php if (!empty($topRekomendasi)): ?>
+                        <div class="space-y-3.5">
+                            <?php foreach ($topRekomendasi as $idx => $rek): ?>
+                                <?php $isSame = $rek['is_same_category'] ?? (($rek['kategori_utama'] ?? '') === ($rek['kategori_asosiasi'] ?? '')); ?>
+                                <div class="p-4 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]/70 hover:border-[#B77466] transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-7 h-7 rounded-xl bg-[#B77466] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                                            #<?= $idx + 1 ?>
+                                        </span>
+                                        <div>
+                                            <div class="text-xs sm:text-sm font-bold text-gray-900">
+                                                <?= esc($rek['produk_utama']) ?> 
+                                                <span class="text-[#B77466] mx-1">&harr;</span> 
+                                                <span class="text-[#B77466]"><?= esc($rek['produk_asosiasi']) ?></span>
+                                            </div>
+                                            <div class="flex flex-wrap items-center gap-2 mt-1">
+                                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold <?= $isSame ? 'bg-emerald-50 text-emerald-800' : 'bg-blue-50 text-blue-800' ?>">
+                                                    <?= $isSame ? 'Satu Rak Bersebelahan' : 'Ujung Lorong / Display Silang' ?>
+                                                </span>
+                                                <span class="text-[11px] text-gray-500"><?= esc($rek['posisi_rak'] ?? 'Rak Tengah') ?></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 pl-10 sm:pl-0">
+                                        <span class="text-xs font-black text-[#B77466]"><?= round($rek['confidence']) ?>% Pembeli Bareng</span>
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-0.5">
+                                            <?= $rek['lift'] ?>x lebih sering
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                            <p class="text-xs text-gray-500 mb-3">Belum ada data transaksi yang cukup untuk menampilkan pratinjau penataan rak.</p>
+                            <a href="<?= base_url('/dataset') ?>" class="inline-block bg-[#B77466] text-white text-xs font-bold px-4 py-2 rounded-xl">Kelola Dataset Sekarang</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Footer Tips Singkat -->
+                <div class="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500">
+                    <span>Ingin mengubah batas Support atau melihat rumus perhitungan manual?</span>
+                    <a href="<?= base_url('/rekomendasi') ?>" class="font-bold text-[#957C62] hover:text-[#B77466] underline">
+                        Atur Parameter Analisis
+                    </a>
                 </div>
             </div>
-        </section>
+
+            <!-- KOLOM KANAN (5 KOLOM): TOP 5 PRODUK & KATEGORI POPULER -->
+            <div class="lg:col-span-5 bg-white rounded-3xl p-6 shadow-md border border-[#E2B59A]/40 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between gap-2 pb-4 border-b border-gray-100 mb-5">
+                        <div>
+                            <h2 class="text-lg font-black text-[#957C62]">Statistik Penjualan</h2>
+                            <p class="text-xs text-gray-500">Item &amp; kategori paling laris di toko</p>
+                        </div>
+
+                        <!-- Switch Toggle -->
+                        <div class="flex bg-gray-100 p-1 rounded-xl text-[11px] font-bold shrink-0">
+                            <button type="button" @click="chartTab = 'produk'"
+                                    :class="chartTab === 'produk' ? 'bg-white text-[#B77466] shadow-sm' : 'text-gray-500 hover:text-gray-800'"
+                                    class="px-2.5 py-1 rounded-lg transition">
+                                Produk
+                            </button>
+                            <button type="button" @click="chartTab = 'kategori'"
+                                    :class="chartTab === 'kategori' ? 'bg-white text-[#B77466] shadow-sm' : 'text-gray-500 hover:text-gray-800'"
+                                    class="px-2.5 py-1 rounded-lg transition">
+                                Kategori
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Grafik Batang Produk Terlaris -->
+                    <div x-show="chartTab === 'produk'" class="space-y-3.5">
+                        <?php if (!empty($topProduk)): ?>
+                            <?php foreach ($topProduk as $idx => $prod): ?>
+                                <?php $pct = round(((int)$prod['jumlah'] / $maxProdJml) * 100); ?>
+                                <div>
+                                    <div class="flex justify-between items-center text-xs mb-1">
+                                        <span class="font-bold text-gray-800 truncate pr-2"><?= ($idx + 1) . '. ' . esc($prod['nama_produk']) ?></span>
+                                        <span class="font-black text-[#B77466] shrink-0"><?= $prod['jumlah'] ?>x</span>
+                                    </div>
+                                    <div class="w-full bg-[#FFE1AF]/40 h-2.5 rounded-full overflow-hidden">
+                                        <div class="bg-[#B77466] h-full rounded-full animate-bar" style="width: <?= $pct ?>%"></div>
+                                    </div>
+                                    <span class="text-[10px] text-gray-400"><?= esc($prod['kategori_produk']) ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-xs text-gray-400 text-center py-8">Belum ada data produk terjual.</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Grafik Batang Kategori Terlaris -->
+                    <div x-show="chartTab === 'kategori'" class="space-y-4" style="display: none;">
+                        <?php if (!empty($topKategori)): ?>
+                            <?php foreach ($topKategori as $idx => $kat): ?>
+                                <?php $pctK = round(((int)$kat['jumlah'] / $maxKatJml) * 100); ?>
+                                <div>
+                                    <div class="flex justify-between items-center text-xs mb-1">
+                                        <span class="font-bold text-gray-800"><?= ($idx + 1) . '. ' . esc($kat['kategori_produk']) ?></span>
+                                        <span class="font-black text-[#957C62] shrink-0"><?= $kat['jumlah'] ?> item</span>
+                                    </div>
+                                    <div class="w-full bg-[#FFE1AF]/40 h-3 rounded-full overflow-hidden">
+                                        <div class="bg-[#957C62] h-full rounded-full animate-bar" style="width: <?= $pctK ?>%"></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-xs text-gray-400 text-center py-8">Belum ada data kategori.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-gray-100 text-[11px] text-gray-500 flex justify-between items-center">
+                    <span>Data diambil dari <?= number_format($totalStruk, 0, ',', '.') ?> struk transaksi</span>
+                    <a href="<?= base_url('/dataset') ?>" class="font-bold text-[#B77466] hover:underline">Lihat Data &rarr;</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- 4. ALUR PENGGUNAAN SISTEM 3 LANGKAH (RINGKAS & BERSIH) -->
+        <!-- =================================================================== -->
+        <div class="bg-white rounded-3xl p-6 shadow-md border border-[#E2B59A]/40 animate-fade-up delay-300">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <h2 class="text-base sm:text-lg font-black text-[#957C62]">Cara Menggunakan Sistem dalam 3 Langkah</h2>
+                <span class="text-xs text-gray-400">Alur Analisis Market Basket Apriori</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="<?= base_url('/dataset') ?>" class="p-4 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]/60 hover:border-[#B77466] transition group">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-lg bg-[#FFE1AF] text-[#B77466] font-black text-xs flex items-center justify-center">01</span>
+                        <h3 class="font-bold text-sm text-gray-900 group-hover:text-[#B77466] transition">Siapkan Data Toko</h3>
+                    </div>
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        Kelola daftar 95 produk sembako dan impor riwayat struk belanja melalui CSV di halaman Dataset.
+                    </p>
+                </a>
+
+                <a href="<?= base_url('/rekomendasi') ?>" class="p-4 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]/60 hover:border-[#B77466] transition group">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-lg bg-[#FFE1AF] text-[#B77466] font-black text-xs flex items-center justify-center">02</span>
+                        <h3 class="font-bold text-sm text-gray-900 group-hover:text-[#B77466] transition">Jalankan Apriori</h3>
+                    </div>
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        Pilih preset Standar Toko atau atur batas Support, Confidence, dan Lift Ratio untuk mencari pasangan barang.
+                    </p>
+                </a>
+
+                <a href="<?= base_url('/history') ?>" class="p-4 rounded-2xl bg-[#FFFDF9] border border-[#E2B59A]/60 hover:border-[#B77466] transition group">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-lg bg-[#FFE1AF] text-[#B77466] font-black text-xs flex items-center justify-center">03</span>
+                        <h3 class="font-bold text-sm text-gray-900 group-hover:text-[#B77466] transition">Terapkan &amp; Simpan</h3>
+                    </div>
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        Ikuti panduan penataan rak dalam bahasa awam, tinjau perhitungan manualnya, dan simpan ke Riwayat.
+                    </p>
+                </a>
+            </div>
+        </div>
 
     </div>
 </div>
-
-<!-- [BARU] Tambahkan script library TypewriterJS -->
-<script src="https://unpkg.com/typewriter-effect@latest/dist/core.js"></script>
-
-<!-- [BARU] Script untuk inisialisasi TypewriterJS -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const typewriterElement = document.getElementById('typewriter-h1');
-
-        if (typewriterElement) {
-            const typewriter = new Typewriter(typewriterElement, {
-                loop: true, // Agar animasi berulang
-                delay: 75, // Kecepatan mengetik (ms)
-                deleteSpeed: 50 // Kecepatan menghapus (ms)
-            });
-
-            // Teks disesuaikan dengan Proyek Analisis Penjualan
-            typewriter
-                .typeString('Analisis Prediksi Penjualan Produk') // Teks pertama
-                .pauseFor(2500) // Jeda sebelum menghapus
-                .deleteAll() // Hapus semua teks
-                .typeString('Memahami Pola Penurnan Penjualan Minimarket') // Teks alternatif
-                .pauseFor(2500)
-                .deleteAll()
-                .typeString('Strategi Bisnis dengan Naive Bayes') // Teks alternatif lain
-                .pauseFor(2500)
-                .start();
-        }
-    });
-</script>
 
 <?= $this->endSection(); ?>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'Analisis Naive Bayes') ?></title>
+    <title><?= esc($title ?? 'Rekomendasi Tata Letak Produk | Apriori') ?></title>
 
     <!-- Scripts (Tailwind & Alpine.js) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -91,11 +91,16 @@
                     <!-- Logo & Brand (Kiri) -->
                     <div class="flex items-center">
                         <a href="<?= base_url('/') ?>" class="flex-shrink-0 flex items-center gap-3">
-                            <!-- SVG Ikon Analisis (Warna Terracotta) -->
-                            <svg class="h-8 w-8 text-[#B77466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            <span class="text-[#957C62] text-xl font-bold tracking-wider hidden sm:block">Analisis Naive Bayes</span>
+                            <!-- SVG Ikon Tata Letak & Apriori -->
+                            <div class="w-10 h-10 rounded-xl bg-[#FFE1AF]/70 border border-[#E2B59A] flex items-center justify-center p-1.5 shadow-sm">
+                                <svg class="w-full h-full text-[#B77466]" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"/>
+                                </svg>
+                            </div>
+                            <div class="hidden sm:block">
+                                <span class="text-[#957C62] text-lg font-extrabold tracking-wide block leading-none">Tata Letak Produk</span>
+                                <span class="text-[11px] font-semibold text-[#B77466] tracking-wider uppercase">Algoritma Apriori</span>
+                            </div>
                         </a>
                     </div>
 
@@ -110,7 +115,7 @@
                                 <!-- Link Aktif: BG Terracotta, Link Inaktif: Teks Coklat -->
                                 <a href="<?= base_url('/') ?>" class="transition duration-300 px-3 py-2 rounded-md text-sm font-medium <?= ($active_menu ?? '') === 'home' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Home</a>
                                 <a href="<?= base_url('/dataset') ?>" class="transition duration-300 px-3 py-2 rounded-md text-sm font-medium <?= ($active_menu ?? '') === 'dataset' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Dataset</a>
-                                <a href="<?= base_url('/analisis') ?>" class="transition duration-300 px-3 py-2 rounded-md text-sm font-medium <?= ($active_menu ?? '') === 'analisis' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Analisis</a>
+                                <a href="<?= base_url('/rekomendasi') ?>" class="transition duration-300 px-3 py-2 rounded-md text-sm font-medium <?= in_array(($active_menu ?? ''), ['rekomendasi', 'analisis']) ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Rekomendasi</a>
                                 <a href="<?= base_url('/history') ?>" class="transition duration-300 px-3 py-2 rounded-md text-sm font-medium <?= ($active_menu ?? '') === 'history' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">History</a>
                             </div>
                         </div>
@@ -162,7 +167,7 @@
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                     <a href="<?= base_url('/') ?>" class="transition duration-300 block px-3 py-2 rounded-md text-base font-medium <?= ($active_menu ?? '') === 'home' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Home</a>
                     <a href="<?= base_url('/dataset') ?>" class="transition duration-300 block px-3 py-2 rounded-md text-base font-medium <?= ($active_menu ?? '') === 'dataset' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Dataset</a>
-                    <a href="<?= base_url('/analisis') ?>" class="transition duration-300 block px-3 py-2 rounded-md text-base font-medium <?= ($active_menu ?? '') === 'analisis' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Analisis</a>
+                    <a href="<?= base_url('/rekomendasi') ?>" class="transition duration-300 block px-3 py-2 rounded-md text-base font-medium <?= in_array(($active_menu ?? ''), ['rekomendasi', 'analisis']) ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">Rekomendasi</a>
                     <a href="<?= base_url('/history') ?>" class="transition duration-300 block px-3 py-2 rounded-md text-base font-medium <?= ($active_menu ?? '') === 'history' ? 'bg-[#B77466] text-white' : 'text-[#957C62] hover:bg-[#FFE1AF]/60 hover:text-[#B77466]' ?>">History</a>
                 </div>
                 <div class="pt-4 pb-3 border-t border-[#E2B59A]/50">

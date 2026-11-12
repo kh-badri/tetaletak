@@ -18,20 +18,28 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('akun/update_profil', 'Akun::updateProfil');
     $routes->post('akun/update_sandi', 'Akun::updateSandi');
 
-    // --- RUTE UNTUK DATASET (SUDAH DIPERBAIKI) ---
-    // Mendefinisikan rute secara manual agar sesuai persis dengan controller dan view
+    // --- RUTE UNTUK DATASET TRANSAKSI & MASTER PRODUK ---
     $routes->get('dataset', 'Dataset::index');
-    $routes->post('dataset/save', 'Dataset::save');       // Untuk form tambah manual
-    $routes->post('dataset/upload', 'Dataset::upload');   // Untuk form upload CSV
-    $routes->get('dataset/export', 'Dataset::export');    // Untuk tombol export
-    $routes->delete('dataset/hapusSemua', 'Dataset::hapusSemua');   
-    $routes->delete('dataset/delete/(:num)', 'Dataset::delete/$1');
+    $routes->post('dataset/save', 'Dataset::save');               // Tambah transaksi manual
+    $routes->post('dataset/upload', 'Dataset::upload');           // Upload CSV transaksi sekaligus
+    $routes->get('dataset/export', 'Dataset::export');            // Export CSV transaksi
+    $routes->delete('dataset/hapusSemua', 'Dataset::hapusSemua'); // Hapus semua transaksi
+    $routes->delete('dataset/delete/(:num)', 'Dataset::delete/$1'); // Hapus satu baris transaksi
 
-$routes->get('analisis', 'Analisis::index');
-$routes->post('analisis/proses', 'Analisis::proses');
+    // Rute Master Produk Sembako (CRUD 95 Produk)
+    $routes->post('dataset/produk/save', 'Dataset::saveProduk');
+    $routes->post('dataset/produk/update/(:num)', 'Dataset::updateProduk/$1');
+    $routes->delete('dataset/produk/delete/(:num)', 'Dataset::deleteProduk/$1');
 
-// --- RUTE BARU DI BAWAH INI ---
-$routes->post('analisis/simpan', 'Analisis::simpan'); // Untuk tombol simpan
+    // --- RUTE REKOMENDASI TATA LETAK PRODUK (ALGORITMA APRIORI) ---
+    $routes->get('rekomendasi', 'Rekomendasi::index');
+    $routes->post('rekomendasi/proses', 'Rekomendasi::proses');
+    $routes->post('rekomendasi/simpan', 'Rekomendasi::simpan');
+
+    // Rute Kompatibilitas / Alias Analisis ke Rekomendasi
+    $routes->addRedirect('analisis', 'rekomendasi');
+    $routes->post('analisis/proses', 'Rekomendasi::proses');
+    $routes->post('analisis/simpan', 'Rekomendasi::simpan');
 
 // Rute untuk Halaman History
 $routes->get('history', 'History::index');

@@ -4,252 +4,366 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\DatasetModel;
-use CodeIgniter\Exceptions\PageNotFoundException;
+use App\Models\ProdukModel;
 
 /**
- * Controller untuk mengelola dataset prediksi penurunan penjualan.
- * Diadaptasi untuk 7 kolom (6 Fitur X, 1 Target Y).
+ * Controller untuk mengelola Dataset Transaksi Sembako & Master 95 Produk Sembako.
  */
 class Dataset extends BaseController
 {
     protected $datasetModel;
+    protected $produkModel;
 
     public function __construct()
     {
-        // Inisialisasi Model
         $this->datasetModel = new DatasetModel();
+        $this->produkModel  = new ProdukModel();
     }
 
     /**
-     * Menampilkan halaman utama dataset dengan semua data.
+     * Menampilkan halaman dataset (Tab Master Produk & Tab Transaksi Pembelian).
      */
     public function index()
     {
+        // 1. Ambil data transaksi (terbaru)
+        $dataset = $this->datasetModel->orderBy('id', 'DESC')->findAll(1000);
+        $totalData = $this->datasetModel->countAllResults();
+
+        // 2. Ambil master data produk
+        $daftarProduk = $this->produkModel->orderBy('id', 'ASC')->findAll();
+        $totalMasterProduk = count($daftarProduk);
+
+        // 3. Statistik transaksi unik
+        $db = \Config\Database::connect();
+        $trxCountRow = $db->query("SELECT COUNT(DISTINCT no_transaksi) as total_trx, COUNT(DISTINCT nama_produk) as total_produk_dibeli FROM dataset_produk")->getRowArray();
+
+        // Kategori produk unik untuk filter dan dropdown form
+        $kategoriList = array_unique(array_column($daftarProduk, 'kategori_produk'));
+        sort($kategoriList);
+
+        $activeTab = $this->request->getGet('tab') ?? 'produk';
+
         $data = [
-            'title'     => 'Manajemen Data Latih (Dataset) Penjualan Produk',
-            'dataset'   => $this->datasetModel->findAll(), // Ambil semua data
-            'active_menu' => 'dataset'
+            'title'               => 'Dataset Sembako & Master 95 Produk | Apriori',
+            'dataset'             => $dataset,
+            'daftarProduk'        => $daftarProduk,
+            'kategoriList'        => $kategoriList,
+            'totalData'           => $totalData,
+            'totalTrx'            => $trxCountRow['total_trx'] ?? 0,
+            'totalProdukDibeli'   => $trxCountRow['total_produk_dibeli'] ?? 0,
+            'totalMasterProduk'   => $totalMasterProduk,
+            'active_menu'         => 'dataset',
+            'active_tab'          => $activeTab
         ];
 
-        return view('dataset/index', $data); // Target: app/Views/dataset/index.php
+        return view('dataset/index', $data);
+    }
+
+    // =========================================================================
+    // FITUR CRUD MASTER PRODUK SEMBAKO (95 PRODUK)
+    // =========================================================================
+
+    /**
+     * Menyimpan produk baru secara manual ke tabel `produk`.
+     */
+    public function saveProduk()
+    {
+        $rules = [
+            'nama_produk'     => 'required|min_length[2]|max_length[150]',
+            'kategori_produk' => 'required|max_length[100]',
+            'harga_satuan'    => 'required|numeric'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->to('/dataset?tab=produk')->withInput()->with('error', 'Validasi gagal: periksa kembali nama, kategori, dan harga produk.');
+        }
+
+        $this->produkModel->save([
+            'nama_produk'     => trim($this->request->getPost('nama_produk')),
+            'kategori_produk' => trim($this->request->getPost('kategori_produk')),
+            'harga_satuan'    => (int) $this->request->getPost('harga_satuan'),
+            'satuan'          => trim($this->request->getPost('satuan') ?: 'Pcs')
+        ]);
+
+        return redirect()->to('/dataset?tab=produk')->with('success', 'Produk sembako baru berhasil ditambahkan!');
     }
 
     /**
-     * Menyimpan data baru dari form manual.
+     * Memperbarui data produk sembako berdasarkan ID.
+     */
+    public function updateProduk($id = null)
+    {
+        if (!$id || !is_numeric($id)) {
+            return redirect()->to('/dataset?tab=produk')->with('error', 'ID produk tidak valid.');
+        }
+
+        $rules = [
+            'nama_produk'     => 'required|min_length[2]|max_length[150]',
+            'kategori_produk' => 'required|max_length[100]',
+            'harga_satuan'    => 'required|numeric'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->to('/dataset?tab=produk')->withInput()->with('error', 'Validasi gagal: mohon isi seluruh field dengan benar.');
+        }
+
+        $this->produkModel->update($id, [
+            'nama_produk'     => trim($this->request->getPost('nama_produk')),
+            'kategori_produk' => trim($this->request->getPost('kategori_produk')),
+            'harga_satuan'    => (int) $this->request->getPost('harga_satuan'),
+            'satuan'          => trim($this->request->getPost('satuan') ?: 'Pcs')
+        ]);
+
+        return redirect()->to('/dataset?tab=produk')->with('success', 'Data produk sembako berhasil diperbarui!');
+    }
+
+    /**
+     * Menghapus produk sembako dari daftar master produk.
+     */
+    public function deleteProduk($id = null)
+    {
+        if (!$id || !is_numeric($id)) {
+            return redirect()->to('/dataset?tab=produk')->with('error', 'ID produk tidak valid.');
+        }
+
+        $prod = $this->produkModel->find($id);
+        if ($prod) {
+            $this->produkModel->delete($id);
+            return redirect()->to('/dataset?tab=produk')->with('success', 'Produk "' . esc($prod['nama_produk']) . '" berhasil dihapus.');
+        }
+
+        return redirect()->to('/dataset?tab=produk')->with('error', 'Produk tidak ditemukan.');
+    }
+
+    // =========================================================================
+    // FITUR TRANSAKSI PEMBELIAN (DATASET APRIORI)
+    // =========================================================================
+
+    /**
+     * Menyimpan transaksi pembelian baru secara manual.
      */
     public function save()
     {
-        // Validasi input disesuaikan dengan 7 kolom Anda
         $rules = [
-            'waktu_penjualan'     => 'required|valid_date[Y-m-d]', // Asumsi input form adalah Y-m-d
+            'waktu_penjualan'     => 'required|valid_date[Y-m-d]',
             'nama_produk'         => 'required|string|max_length[150]',
             'kategori_produk'     => 'required|string|max_length[100]',
             'harga_produk_rp'     => 'required|numeric|integer',
             'jumlah_terjual_unit' => 'required|numeric|integer',
-            'status_promosi'      => 'required|in_list[Ya,Tidak]',
-            'terjadi_penurunan'   => 'required|in_list[Ya,Tidak]',
         ];
 
         if (!$this->validate($rules)) {
-            // Jika validasi gagal
-            return redirect()->to('/dataset')->withInput()->with('error', 'Validasi gagal, mohon periksa kembali input Anda.');
+            return redirect()->to('/dataset?tab=transaksi')->withInput()->with('error', 'Validasi gagal, mohon periksa kembali input transaksi.');
         }
 
-        // Simpan data ke database
+        $waktu = $this->request->getPost('waktu_penjualan');
+        $noTrx = $this->request->getPost('no_transaksi');
+        if (empty($noTrx)) {
+            $noTrx = 'TRX-' . date('Ymd', strtotime($waktu)) . '-' . rand(1000, 9999);
+        }
+
+        $harga = (int) $this->request->getPost('harga_produk_rp');
+        $qty = (int) $this->request->getPost('jumlah_terjual_unit');
+        $total = $harga * $qty;
+
         $this->datasetModel->save([
-            'waktu_penjualan'     => $this->request->getPost('waktu_penjualan'),
+            'no_transaksi'        => $noTrx,
+            'waktu_penjualan'     => $waktu,
+            'id_produk'           => (int) $this->request->getPost('id_produk') ?: null,
             'nama_produk'         => $this->request->getPost('nama_produk'),
             'kategori_produk'     => $this->request->getPost('kategori_produk'),
-            'harga_produk_rp'     => $this->request->getPost('harga_produk_rp'),
-            'jumlah_terjual_unit' => $this->request->getPost('jumlah_terjual_unit'),
-            'status_promosi'      => $this->request->getPost('status_promosi'),
-            'terjadi_penurunan'   => $this->request->getPost('terjadi_penurunan'),
+            'harga_produk_rp'     => $harga,
+            'jumlah_terjual_unit' => $qty,
+            'total_harga'         => $total,
         ]);
 
-        return redirect()->to('/dataset')->with('success', 'Data berhasil ditambahkan!');
+        return redirect()->to('/dataset?tab=transaksi')->with('success', 'Data item transaksi berhasil ditambahkan!');
     }
 
     /**
-     * Memproses file CSV yang di-upload dan menyimpannya ke database.
+     * Memproses upload file CSV transaksi sekaligus (Format Comma RFC 4180).
      */
     public function upload()
     {
         $file = $this->request->getFile('dataset_csv');
 
-        // 1. Validasi File
-        if ($file === null || !$file->isValid() || !in_array($file->getMimeType(), ['text/csv', 'application/csv', 'text/plain'])) {
-            return redirect()->to('/dataset')->with('error', 'Upload gagal. Pastikan Anda memilih file CSV yang valid.');
+        if ($file === null || !$file->isValid()) {
+            return redirect()->to('/dataset?tab=transaksi')->with('error', 'Upload gagal. Pastikan Anda memilih file CSV yang valid.');
         }
 
         $filePath = $file->getRealPath();
-        
-        // Membaca file baris per baris
-        $fileContent = file($filePath); 
-        if ($fileContent === false) {
-            return redirect()->to('/dataset')->with('error', 'Gagal membaca isi file CSV.');
+        $handle = fopen($filePath, 'r');
+        if ($handle === false) {
+            return redirect()->to('/dataset?tab=transaksi')->with('error', 'Gagal membaca file CSV.');
         }
 
-        // 2. Parsing CSV dengan delimiter ';'
-        try {
-            // Kita gunakan str_getcsv dengan delimiter ';'
-            $csvData = array_map(function($v){return str_getcsv($v, ";");}, $fileContent);
-            
-            // Hapus baris header
-            array_shift($csvData); 
-        } catch (\Exception $e) {
-             return redirect()->to('/dataset')->with('error', 'Format CSV tidak valid. Pastikan delimiter adalah titik koma (;).');
+        // Baca baris pertama untuk mendeteksi delimiter
+        $firstLine = fgets($handle);
+        $delimiter = ',';
+        if (substr_count($firstLine, ';') > substr_count($firstLine, ',')) {
+            $delimiter = ';';
+        }
+        rewind($handle);
+
+        $header = fgetcsv($handle, 0, $delimiter);
+        if (!$header) {
+            fclose($handle);
+            return redirect()->to('/dataset?tab=transaksi')->with('error', 'File CSV kosong.');
         }
 
+        // Hapus UTF-8 BOM jika ada
+        $header[0] = preg_replace('/[\x{EF}\x{BB}\x{BF}]/u', '', $header[0]);
+        $header = array_map('trim', $header);
 
         $dataToInsert = [];
-        $insertedCount = 0;
-        $rowCount = 1; // Mulai dari 1 (setelah header)
+        $rowCount = 1;
+        $batchSize = 500;
+        $totalInserted = 0;
 
-        // 3. Loop dan Peta Data
-        foreach ($csvData as $row) {
+        // Kosongkan data transaksi lama saat import massal baru
+        $this->datasetModel->emptyTable();
+
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
             $rowCount++;
-            if (empty($row) || empty($row[0])) {
-                continue; // Lewati baris kosong
-            }
-            
-            // Pastikan jumlah kolom sesuai
-            if (count($row) < 7) {
-                 return redirect()->to('/dataset')->with('error', "Format data salah di baris {$rowCount}. Harap periksa file CSV Anda.");
+            if (empty($row) || (count($row) === 1 && empty($row[0]))) {
+                continue;
             }
 
-            // A. Mengolah 'waktu_penjualan' (dari DD/MM/YYYY ke YYYY-MM-DD)
-            $waktu_penjualan_raw = trim($row[0]);
-            // Cek format, bisa d/m/Y atau Y-m-d (dari file py)
-            $dateObj = \DateTime::createFromFormat('d/m/Y', $waktu_penjualan_raw);
-            if ($dateObj === false) {
-                // Coba format lain jika gagal
-                 $dateObj = \DateTime::createFromFormat('Y-m-d', $waktu_penjualan_raw);
+            if (count($row) >= 8) {
+                $noTrx = trim($row[0]);
+                $tglRaw = trim($row[1]);
+                $idProd = (int) trim($row[2]);
+                $namaProd = trim($row[3]);
+                $katProd = trim($row[4]);
+                $harga = (int) trim($row[5]);
+                $qty = (int) trim($row[6]);
+                $total = (int) trim($row[7]);
+            } elseif (count($row) >= 7) {
+                $tglRaw = trim($row[0]);
+                $namaProd = trim($row[1]);
+                $katProd = trim($row[2]);
+                $harga = (int) trim($row[3]);
+                $qty = (int) trim($row[4]);
+                $total = $harga * $qty;
+                $noTrx = 'TRX-' . date('Ymd') . '-' . str_pad($rowCount, 4, '0', STR_PAD_LEFT);
+                $idProd = null;
+            } else {
+                continue;
             }
-            
-            if ($dateObj === false) {
-                // Jika format tanggal salah
-                return redirect()->to('/dataset')->with('error', "Format tanggal salah di baris {$rowCount}. Seharusnya DD/MM/YYYY atau YYYY-MM-DD. Ditemukan: {$waktu_penjualan_raw}");
-            }
-            $waktu_penjualan_db = $dateObj->format('Y-m-d');
 
-            // B. Mengolah kolom lain (trim untuk hapus spasi)
-            // (Kita asumsikan angka sudah bersih dari titik ribuan, sesuai file terakhir Anda)
-            $nama_produk = trim($row[1]);
-            $kategori_produk = trim($row[2]);
-            $harga_produk_rp = (int) trim($row[3]);
-            $jumlah_terjual_unit = (int) trim($row[4]);
-            $status_promosi = trim($row[5]);
-            $terjadi_penurunan = trim($row[6]);
+            $dateObj = \DateTime::createFromFormat('Y-m-d', $tglRaw);
+            if ($dateObj === false) {
+                $dateObj = \DateTime::createFromFormat('d/m/Y', $tglRaw);
+            }
+            $tglDb = ($dateObj !== false) ? $dateObj->format('Y-m-d') : date('Y-m-d');
 
             $dataToInsert[] = [
-                'waktu_penjualan'     => $waktu_penjualan_db,
-                'nama_produk'         => $nama_produk,
-                'kategori_produk'     => $kategori_produk,
-                'harga_produk_rp'     => $harga_produk_rp,
-                'jumlah_terjual_unit' => $jumlah_terjual_unit,
-                'status_promosi'      => $status_promosi,
-                'terjadi_penurunan'   => $terjadi_penurunan,
+                'no_transaksi'        => $noTrx,
+                'waktu_penjualan'     => $tglDb,
+                'id_produk'           => $idProd,
+                'nama_produk'         => $namaProd,
+                'kategori_produk'     => $katProd,
+                'harga_produk_rp'     => $harga,
+                'jumlah_terjual_unit' => $qty,
+                'total_harga'         => $total,
             ];
-        }
 
-        // 4. Simpan ke Database
-        if (!empty($dataToInsert)) {
-            try {
-                // Hapus data lama (TRUNCATE) agar data selalu fresh
-                $this->datasetModel->emptyTable();
-                
-                // Insert batch
-                $insertedCount = $this->datasetModel->insertBatch($dataToInsert);
-
-            } catch (\Exception $e) {
-                return redirect()->to('/dataset')->with('error', 'Terjadi error saat menyimpan ke database: ' . $e->getMessage());
+            if (count($dataToInsert) >= $batchSize) {
+                $this->datasetModel->insertBatch($dataToInsert);
+                $totalInserted += count($dataToInsert);
+                $dataToInsert = [];
             }
         }
 
-        return redirect()->to('/dataset')->with('success', "Upload selesai! {$insertedCount} baris data baru berhasil diimpor.");
+        if (!empty($dataToInsert)) {
+            $this->datasetModel->insertBatch($dataToInsert);
+            $totalInserted += count($dataToInsert);
+        }
+
+        fclose($handle);
+
+        return redirect()->to('/dataset?tab=transaksi')->with('success', "Import massal CSV selesai! {$totalInserted} baris data transaksi sembako berhasil diimpor.");
     }
 
     /**
-     * Menghapus semua data dari tabel dataset.
+     * Menghapus seluruh data transaksi dari tabel.
      */
     public function hapusSemua()
     {
         try {
-            $tableName = $this->datasetModel->table;
             $countBefore = $this->datasetModel->countAllResults(false);
-
             if ($countBefore == 0) {
-                return redirect()->to('/dataset')->with('info', 'Tidak ada data untuk dihapus.');
+                return redirect()->to('/dataset?tab=transaksi')->with('info', 'Tidak ada data untuk dihapus.');
             }
 
-            // Gunakan fungsi emptyTable (TRUNCATE) dari model
-            $this->datasetModel->emptyTable(); 
-
-            return redirect()->to('/dataset')->with('success', "Semua data ({$countBefore} baris) berhasil dihapus dan di-reset.");
-        
+            $this->datasetModel->emptyTable();
+            return redirect()->to('/dataset?tab=transaksi')->with('success', "Semua data transaksi ({$countBefore} baris) berhasil dihapus.");
         } catch (\Exception $e) {
             log_message('error', 'Error hapusSemua: ' . $e->getMessage());
-            return redirect()->to('/dataset')->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            return redirect()->to('/dataset?tab=transaksi')->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
 
     /**
-     * Menghapus satu baris data berdasarkan ID.
+     * Menghapus satu item transaksi berdasarkan ID.
      */
     public function delete($id = null)
     {
-        // Validasi $id untuk keamanan
         if (!is_numeric($id) || $id === null) {
-             return redirect()->to('/dataset')->with('error', 'ID data tidak valid.');
+            return redirect()->to('/dataset?tab=transaksi')->with('error', 'ID data tidak valid.');
         }
 
-        $dataset = $this->datasetModel->find($id);
-        if ($dataset) {
+        $row = $this->datasetModel->find($id);
+        if ($row) {
             $this->datasetModel->delete($id);
-            return redirect()->to('/dataset')->with('success', 'Data berhasil dihapus.');
+            return redirect()->to('/dataset?tab=transaksi')->with('success', 'Data item transaksi berhasil dihapus.');
         }
 
-        return redirect()->to('/dataset')->with('error', 'Data tidak ditemukan.');
+        return redirect()->to('/dataset?tab=transaksi')->with('error', 'Data tidak ditemukan.');
     }
 
     /**
-     * Mengunduh semua data dari tabel sebagai file CSV.
+     * Export dataset ke file CSV berformat Comma (,).
      */
     public function export()
     {
         $data = $this->datasetModel->findAll();
-        $filename = 'export_dataset_penjualan_' . date('Y-m-d') . '.csv';
+        $filename = 'dataset_transaksi_sembako_2027_' . date('Ymd_His') . '.csv';
 
         header("Content-Description: File Transfer");
         header("Content-Disposition: attachment; filename=$filename");
-        header("Content-Type: application/csv; charset=utf-8"); // Tambah charset
+        header("Content-Type: text/csv; charset=utf-8");
 
         $file = fopen('php://output', 'w');
-        fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF))); // Tambah BOM untuk Excel
+        fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
-        // Tulis baris header (sesuai dengan 7 kolom + id)
         $header = [
-            'id',
-            'waktu_penjualan',
+            'no_transaksi',
+            'tanggal_transaksi',
+            'id_produk',
             'nama_produk',
             'kategori_produk',
-            'harga_produk_rp',
-            'jumlah_terjual_unit',
-            'status_promosi',
-            'terjadi_penurunan',
-            'created_at',
-            'updated_at'
+            'harga_satuan',
+            'jumlah',
+            'total_harga'
         ];
-        // Gunakan ; sebagai delimiter
-        fputcsv($file, $header, ';'); 
+        fputcsv($file, $header, ',');
 
-        // Tulis data baris per baris
         foreach ($data as $row) {
-            fputcsv($file, $row, ';'); // Gunakan ; sebagai delimiter
+            $line = [
+                $row['no_transaksi'] ?? '',
+                $row['waktu_penjualan'],
+                $row['id_produk'] ?? '',
+                $row['nama_produk'],
+                $row['kategori_produk'],
+                $row['harga_produk_rp'],
+                $row['jumlah_terjual_unit'],
+                $row['total_harga'] ?? ($row['harga_produk_rp'] * $row['jumlah_terjual_unit'])
+            ];
+            fputcsv($file, $line, ',');
         }
 
         fclose($file);
         exit;
     }
 }
-

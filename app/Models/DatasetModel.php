@@ -27,11 +27,14 @@ class DatasetModel extends Model
      * Ini HARUS Sesuai dengan 7 kolom data Anda.
      */
     protected $allowedFields    = [
+        'no_transaksi',
         'waktu_penjualan',
+        'id_produk',
         'nama_produk',
         'kategori_produk',
         'harga_produk_rp',
         'jumlah_terjual_unit',
+        'total_harga',
         'status_promosi',
         'terjadi_penurunan'
     ];
