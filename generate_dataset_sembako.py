@@ -170,12 +170,12 @@ AFFINITY_PATTERNS = [
 ]
 
 def generate_transactions(output_csv):
-    random.seed(2027) # Seed konsisten tahun 2027
+    random.seed(2026) # Seed konsisten tahun 2026
     
-    # 3 Bulan Terakhir Tahun 2027 terhitung bulan saat ini (November):
-    # September (01-30), Oktober (01-31), November (01-30) tahun 2027
-    start_date = date(2027, 9, 1)
-    end_date = date(2027, 11, 30)
+    # 3 Bulan Terakhir:
+    # Agustus (01-31), September (01-30), Oktober (01-31) tahun 2026 (November tidak termasuk)
+    start_date = date(2026, 8, 1)
+    end_date = date(2026, 10, 31)
     
     rows = []
     trx_counter = 1
@@ -299,10 +299,10 @@ def generate_transactions(output_csv):
 
     total_trx = trx_counter - 1
     total_items = len(rows)
-    print("SUKSES GENERATE DATASET TRANSAKSI SEMBAKO (3 BULAN TERAKHIR 2027)!")
+    print("SUKSES GENERATE DATASET TRANSAKSI SEMBAKO (3 BULAN: AGUSTUS - OKTOBER 2026)!")
     print(f"- Format Delimiter: Comma (,)")
     print(f"- Lokasi File: {output_csv}")
-    print(f"- Rentang Waktu: {start_date} s.d. {end_date} (September - November 2027)")
+    print(f"- Rentang Waktu: {start_date} s.d. {end_date} (Agustus - Oktober 2026)")
     print(f"- Total Transaksi (Keranjang Belanja): {total_trx:,}")
     print(f"- Total Baris Item Transaksi: {total_items:,}")
     print(f"- Macam Produk: {len(PRODUCTS)} produk sembako")
@@ -310,4 +310,4 @@ def generate_transactions(output_csv):
     print(f"- Produk dengan kemunculan paling banyak: {max(product_usage_count.values())}x")
 
 if __name__ == "__main__":
-    generate_transactions("c:/laragon/www/tataletak/dataset_transaksi_sembako_2027.csv")
+    generate_transactions("c:/laragon/www/tataletak/dataset_transaksi_sembako_2026.csv")

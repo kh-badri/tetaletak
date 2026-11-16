@@ -20,12 +20,12 @@ class AprioriService
     /**
      * Menjalankan Algoritma Apriori secara lengkap
      *
-     * @param float $minSupport    Dalam persen, contoh: 2.0 (artinya 2%)
-     * @param float $minConfidence Dalam persen, contoh: 20.0 (artinya 20%)
-     * @param float $minLift       Nilai minimal lift ratio, contoh: 1.0
+     * @param float $minSupport    Dalam persen, contoh: 3.0 (artinya 3%)
+     * @param float $minConfidence Dalam persen, contoh: 50.0 (artinya 50%)
+     * @param float $minLift       Nilai minimal lift ratio, contoh: 1.2
      * @return array
      */
-    public function run(float $minSupport = 2.0, float $minConfidence = 20.0, float $minLift = 1.0): array
+    public function run(float $minSupport = 3.0, float $minConfidence = 50.0, float $minLift = 1.2): array
     {
         $this->minSupport    = max(0.001, $minSupport / 100);
         $this->minConfidence = max(0.001, $minConfidence / 100);

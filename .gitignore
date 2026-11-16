@@ -1,39 +1,96 @@
-# CodeIgniter 4 specific ignores
+# =====================================================================
+# GITIGNORE - SISTEM REKOMENDASI TATA LETAK PRODUK (CODEIGNITER 4)
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. Environment & Sensitive Config
+# ---------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------------------
+# 2. CodeIgniter 4 Writable Directory (Runtime, Cache, Logs, Sessions)
+# ---------------------------------------------------------------------
+/writable/cache/*
+!/writable/cache/index.html
+!/writable/cache/.gitkeep
+
+/writable/debugbar/*
+!/writable/debugbar/index.html
+!/writable/debugbar/.gitkeep
+
+/writable/logs/*
+!/writable/logs/index.html
+!/writable/logs/.gitkeep
+
+/writable/session/*
+!/writable/session/index.html
+!/writable/session/.gitkeep
+
+/writable/uploads/*
+!/writable/uploads/index.html
+!/writable/uploads/.gitkeep
+
+# ---------------------------------------------------------------------
+# 3. Dependencies & Package Managers
+# ---------------------------------------------------------------------
 /vendor/
-
-# .env
-# .env.testing
-
-# Composer and npm
-composer.lock
-npm-debug.log
-.idea/
-.vscode/
-
-# Node modules (for Tailwind CSS compilation)
+composer.phar
 /node_modules/
-/public/css/tailwind.css.map
-/public/build/ # If you use custom build process that generates files here
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Common OS and editor files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-.sass-cache/
+# ---------------------------------------------------------------------
+# 4. Python Environment & Caches
+# ---------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+venv/
+.venv/
+env/
+ENV/
+
+# ---------------------------------------------------------------------
+# 5. Temporary, Logs, & Test Files
+# ---------------------------------------------------------------------
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+cookie.txt
+test_*.php
+scratch_*.php
+
+# ---------------------------------------------------------------------
+# 6. IDEs, Editors, & Tooling
+# ---------------------------------------------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 .project
 .settings/
 .buildpath
-*.sublime-project
-*.sublime-workspace
-.directory
-
-# Testing and CI
+/nbproject/
 /.c9/
 /.php_cs.cache
 /build/
-/nbproject/
 
-# Any local configuration files that might contain sensitive info
-
-# If you have specific log files not covered by /writable/
-*.log
+# ---------------------------------------------------------------------
+# 7. Operating System Files
+# ---------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini

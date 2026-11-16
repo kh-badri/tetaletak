@@ -49,9 +49,9 @@ class Rekomendasi extends BaseController
     public function proses()
     {
         try {
-            $minSupport    = (float) ($this->request->getPost('min_support') ?? 2.0);
-            $minConfidence = (float) ($this->request->getPost('min_confidence') ?? 20.0);
-            $minLift       = (float) ($this->request->getPost('min_lift') ?? 1.0);
+            $minSupport    = (float) ($this->request->getPost('min_support') ?? 3.0);
+            $minConfidence = (float) ($this->request->getPost('min_confidence') ?? 50.0);
+            $minLift       = (float) ($this->request->getPost('min_lift') ?? 1.2);
 
             // Validasi batasan input
             if ($minSupport <= 0 || $minSupport > 100) {

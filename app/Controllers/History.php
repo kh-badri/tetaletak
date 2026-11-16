@@ -35,9 +35,9 @@ class History extends BaseController
                 'total_data'           => $row['total_data'],
                 'total_rules'          => $analisisData['total_rules'] ?? count($analisisData['rules'] ?? []),
                 'total_rekomendasi'    => count($rekomendasiData),
-                'min_support'          => $params['min_support'] ?? 2.0,
-                'min_confidence'       => $params['min_confidence'] ?? 20.0,
-                'min_lift'             => $params['min_lift'] ?? 1.0,
+                'min_support'          => $params['min_support'] ?? 3.0,
+                'min_confidence'       => $params['min_confidence'] ?? 50.0,
+                'min_lift'             => $params['min_lift'] ?? 1.2,
                 'contoh_rekomendasi'   => !empty($rekomendasiData[0]) ? ($rekomendasiData[0]['produk_utama'] . ' ↔ ' . $rekomendasiData[0]['produk_asosiasi']) : 'Rekomendasi Rak Sembako'
             ];
         }
@@ -87,7 +87,7 @@ class History extends BaseController
         $rekomendasiData = json_decode($item['hasil_evaluasi'] ?? '[]', true) ?: [];
         $params = json_decode($item['hasil_prediksi'] ?? '{}', true) ?: [];
 
-        $minSuppCount = $params['min_support_count'] ?? (int) ceil((($params['min_support'] ?? 2.0) / 100) * $item['total_data']);
+        $minSuppCount = $params['min_support_count'] ?? (int) ceil((($params['min_support'] ?? 3.0) / 100) * $item['total_data']);
         $rules = $analisisData['rules'] ?? [];
         $perhitunganManual = $analisisData['perhitungan_manual'] ?? null;
 
@@ -109,10 +109,10 @@ class History extends BaseController
                     'count_a'         => $nA,
                     'count_b'         => $nB,
                     'count_ab'        => $nAB,
-                    'min_support_pct' => $params['min_support'] ?? 2.0,
+                    'min_support_pct' => $params['min_support'] ?? 3.0,
                     'min_supp_count'  => $minSuppCount,
-                    'min_conf_pct'    => $params['min_confidence'] ?? 20.0,
-                    'min_lift'        => $params['min_lift'] ?? 1.0,
+                    'min_conf_pct'    => $params['min_confidence'] ?? 50.0,
+                    'min_lift'        => $params['min_lift'] ?? 1.2,
                     'supp_a'          => $topRule['support_a'] ?? round(($nA / $N) * 100, 2),
                     'supp_b'          => $topRule['support_b'] ?? round(($nB / $N) * 100, 2),
                     'supp_ab'         => $topRule['support'] ?? round(($nAB / $N) * 100, 2),
@@ -129,10 +129,10 @@ class History extends BaseController
             $perhitunganManual = [
                 'ringkasan' => [
                     'total_transaksi'        => $item['total_data'],
-                    'min_support_persen'     => $params['min_support'] ?? 2.0,
+                    'min_support_persen'     => $params['min_support'] ?? 3.0,
                     'min_support_count'      => $minSuppCount,
-                    'min_confidence_persen'  => $params['min_confidence'] ?? 20.0,
-                    'min_lift'               => $params['min_lift'] ?? 1.0,
+                    'min_confidence_persen'  => $params['min_confidence'] ?? 50.0,
+                    'min_lift'               => $params['min_lift'] ?? 1.2,
                     'c1_total'               => 95,
                     'l1_total'               => count($analisisData['frequent_itemsets_1'] ?? []),
                     'c1_tereliminasi'        => max(0, 95 - count($analisisData['frequent_itemsets_1'] ?? [])),
@@ -151,9 +151,9 @@ class History extends BaseController
         $hasil = [
             'status'                => 'success',
             'total_transaksi'       => $item['total_data'],
-            'min_support'           => $params['min_support'] ?? 2.0,
-            'min_confidence'        => $params['min_confidence'] ?? 20.0,
-            'min_lift'              => $params['min_lift'] ?? 1.0,
+            'min_support'           => $params['min_support'] ?? 3.0,
+            'min_confidence'        => $params['min_confidence'] ?? 50.0,
+            'min_lift'              => $params['min_lift'] ?? 1.2,
             'min_support_count'     => $minSuppCount,
             'itemsets_1'            => $analisisData['frequent_itemsets_1'] ?? [],
             'itemsets_2'            => $analisisData['frequent_itemsets_2'] ?? [],

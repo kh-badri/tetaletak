@@ -181,7 +181,7 @@
                     <div class="text-2xl sm:text-3xl font-black text-slate-900 mt-1 group-hover:text-indigo-600 transition">
                         <?= number_format($totalItemTrx, 0, ',', '.') ?>
                     </div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block">Periode Sept–Nov 2027</span>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Periode Agust–Okt 2026</span>
                 </div>
                 <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

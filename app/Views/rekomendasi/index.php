@@ -4,24 +4,24 @@
 
 <div class="w-full min-h-screen bg-[#F0F7FF] py-8 px-4 sm:px-6 text-slate-800" 
      x-data="{
-        support: '<?= old('min_support', '2.0') ?>',
-        confidence: '<?= old('min_confidence', '20.0') ?>',
-        lift: '<?= old('min_lift', '1.0') ?>',
+        support: '<?= old('min_support', '3.0') ?>',
+        confidence: '<?= old('min_confidence', '50.0') ?>',
+        lift: '<?= old('min_lift', '1.2') ?>',
         preset: 'standar',
         showRumus: false,
         setPreset(type) {
             this.preset = type;
             if (type === 'standar') {
-                this.support = '2.0';
-                this.confidence = '20.0';
-                this.lift = '1.0';
-            } else if (type === 'ketat') {
                 this.support = '3.0';
-                this.confidence = '40.0';
+                this.confidence = '50.0';
+                this.lift = '1.2';
+            } else if (type === 'ketat') {
+                this.support = '4.0';
+                this.confidence = '60.0';
                 this.lift = '1.5';
             } else if (type === 'luas') {
-                this.support = '1.5';
-                this.confidence = '15.0';
+                this.support = '2.0';
+                this.confidence = '30.0';
                 this.lift = '1.0';
             }
         }
@@ -62,7 +62,7 @@
                         <?= number_format($totalBaris ?? 0, 0, ',', '.') ?> Item Transaksi
                     </span>
                     <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
-                        Data 3 Bulan (Sept–Nov 2027)
+                        Data 3 Bulan (Agust–Okt 2026)
                     </span>
                 </div>
             </div>
@@ -102,7 +102,7 @@
                     <div class="bg-sky-50/40 p-4 rounded-2xl border border-sky-100">
                         <div class="flex justify-between items-center mb-1.5">
                             <label for="min_support" class="text-xs font-bold text-slate-700">Min. Support (%)</label>
-                            <span class="text-xs font-black text-[#0284C7]" x-text="support + '%'">2.0%</span>
+                            <span class="text-xs font-black text-[#0284C7]" x-text="support + '%'">3.0%</span>
                         </div>
                         <input type="number" step="any" min="0.1" max="100" name="min_support" id="min_support" 
                                x-model="support" @input="preset = 'custom'"
@@ -114,7 +114,7 @@
                     <div class="bg-sky-50/40 p-4 rounded-2xl border border-sky-100">
                         <div class="flex justify-between items-center mb-1.5">
                             <label for="min_confidence" class="text-xs font-bold text-slate-700">Min. Confidence (%)</label>
-                            <span class="text-xs font-black text-[#0284C7]" x-text="confidence + '%'">20.0%</span>
+                            <span class="text-xs font-black text-[#0284C7]" x-text="confidence + '%'">50.0%</span>
                         </div>
                         <input type="number" step="any" min="0.1" max="100" name="min_confidence" id="min_confidence" 
                                x-model="confidence" @input="preset = 'custom'"
@@ -126,7 +126,7 @@
                     <div class="bg-sky-50/40 p-4 rounded-2xl border border-sky-100">
                         <div class="flex justify-between items-center mb-1.5">
                             <label for="min_lift" class="text-xs font-bold text-slate-700">Min. Lift Ratio</label>
-                            <span class="text-xs font-black text-[#0284C7]" x-text="lift">1.0</span>
+                            <span class="text-xs font-black text-[#0284C7]" x-text="lift">1.2</span>
                         </div>
                         <input type="number" step="any" min="0" max="20" name="min_lift" id="min_lift" 
                                x-model="lift" @input="preset = 'custom'"
