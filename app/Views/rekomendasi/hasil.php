@@ -6,15 +6,19 @@
     $manual      = $hasil['perhitungan_manual'] ?? [];
     $ringkasan   = $manual['ringkasan'] ?? [];
     $kasus       = $manual['contoh_kasus'] ?? null;
+    $sampel10    = $manual['sampel_10'] ?? [];
     $c1Lengkap   = $manual['c1_lengkap'] ?? [];
     $rekomendasi = $hasil['rekomendasi_tataletak'] ?? [];
     $top3        = array_slice($rekomendasi, 0, 3);
+    $totalTrx    = $hasil['total_transaksi'] ?? 788;
 ?>
 
 <div class="w-full min-h-screen bg-[#F0F7FF] py-6 px-4 sm:px-6 text-slate-800" 
      x-data="{ 
         activeTab: 'rekomendasi', 
         subTabTeknis: 'rules',
+        subPerhitunganMode: 'dataset',
+        subTabSampel: 'tabel41',
         searchRek: '',
         filterTipe: '',
         searchTeknis: ''
@@ -270,271 +274,535 @@
         <!-- =================================================================== -->
         <div x-show="activeTab === 'perhitungan'" x-transition.opacity style="display: none;">
 
-            <!-- 1. ALUR KERJA 5 TAHAP -->
-            <div class="bg-white rounded-3xl p-6 shadow-md shadow-sky-900/5 border border-sky-100 mb-6">
-                <h2 class="text-lg font-black text-slate-900 mb-4">Alur Kerja Algoritma Apriori (5 Tahap)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-                    <div class="p-3.5 rounded-2xl bg-sky-50/50 border border-sky-200">
-                        <span class="font-black text-[#0284C7] block mb-1">1. Data Transaksi (N)</span>
-                        <p class="text-slate-600">Membaca total <strong><?= $hasil['total_transaksi'] ?> struk</strong> keranjang belanja.</p>
-                    </div>
-                    <div class="p-3.5 rounded-2xl bg-sky-50/50 border border-sky-200">
-                        <span class="font-black text-[#0284C7] block mb-1">2. Seleksi 1-Item (L1)</span>
-                        <p class="text-slate-600">Hitung frekuensi per produk. Minimal <?= $hasil['min_support_count'] ?? 16 ?> transaksi (&ge; <?= $hasil['min_support'] ?>%) lolos ke <strong>L1 (<?= count($hasil['itemsets_1'] ?? []) ?> item)</strong>.</p>
-                    </div>
-                    <div class="p-3.5 rounded-2xl bg-sky-50/50 border border-sky-200">
-                        <span class="font-black text-[#0284C7] block mb-1">3. Pasangan 2-Item (L2)</span>
-                        <p class="text-slate-600">Gabungkan item L1 menjadi pasangan. Pasangan yang sering muncul lolos ke <strong>L2 (<?= count($hasil['itemsets_2'] ?? []) ?> pasang)</strong>.</p>
-                    </div>
-                    <div class="p-3.5 rounded-2xl bg-sky-50/50 border border-sky-200">
-                        <span class="font-black text-[#0284C7] block mb-1">4. Aturan Asosiasi</span>
-                        <p class="text-slate-600">Uji aturan <code class="bg-white px-1 rounded border border-sky-200">A &rarr; B</code>. Hanya yang memiliki Confidence &ge; <strong><?= $hasil['min_confidence'] ?>%</strong> yang lolos.</p>
-                    </div>
-                    <div class="p-3.5 rounded-2xl bg-sky-50/50 border border-sky-200">
-                        <span class="font-black text-[#0284C7] block mb-1">5. Uji Validitas Lift</span>
-                        <p class="text-slate-600">Uji kekuatan korelasi. Nilai <strong>Lift &gt; 1.0</strong> menghasilkan <strong><?= $hasil['total_rules'] ?? 0 ?> aturan valid</strong>.</p>
-                    </div>
-                </div>
+            <!-- PILIHAN SUB-MODE PERHITUNGAN: DATASET UTAMA VS SIMULASI SAMPEL 10 -->
+            <div class="flex flex-col sm:flex-row gap-2 p-1.5 bg-sky-100/70 rounded-2xl border border-sky-200 shadow-inner mb-6">
+                <button type="button" @click="subPerhitunganMode = 'dataset'"
+                        :class="subPerhitunganMode === 'dataset' ? 'bg-white text-[#0284C7] shadow font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3zm0 5h16M9 4v16"/>
+                    </svg>
+                    <span>Hasil Seluruh Dataset (788 Transaksi) &bull; Tabel 4.10 &amp; 4.11</span>
+                </button>
+                <button type="button" @click="subPerhitunganMode = 'sampel10'"
+                        :class="subPerhitunganMode === 'sampel10' ? 'bg-white text-[#0284C7] shadow font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    <span>Simulasi Manual 10 Sampel Pertama &bull; Tabel 4.1 s.d. 4.9</span>
+                </button>
             </div>
 
-            <!-- 2. RUMUS MATEMATIKA + STUDI KASUS PERHITUNGAN MANUAL -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                
-                <!-- Kiri (1/3): 3 Rumus Dasar -->
-                <div class="bg-white rounded-3xl p-6 shadow-md shadow-sky-900/5 border border-sky-100 space-y-4">
-                    <h3 class="text-base font-black text-slate-900 border-b border-slate-100 pb-2">Rumus Matematika Apriori</h3>
-                    
-                    <div class="p-3 rounded-xl bg-sky-50/50 border border-sky-100 text-xs">
-                        <strong class="text-[#0284C7] block mb-1">1. Support (Dukungan)</strong>
-                        <div class="font-mono text-[11px] bg-white p-2 rounded border border-sky-100 text-slate-800">
-                            Supp(A) = (&sum;Trx A / N) &times; 100%<br>
-                            Supp(A&cup;B) = (&sum;Trx A&amp;B / N) &times; 100%
+            <!-- =============================================================== -->
+            <!-- SUB-VIEW 1: HASIL PENGOLAHAN SELURUH DATASET (788 TRANSAKSI)   -->
+            <!-- =============================================================== -->
+            <div x-show="subPerhitunganMode === 'dataset'">
+                <!-- Parameter Box Skripsi -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md shadow-sky-900/5 border border-sky-100 mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-sky-100">
+                        <div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900">Hasil Pengolahan Algoritma Apriori (Seluruh Dataset)</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Sesuai Bab 4 Skripsi: Pengolahan seluruh 788 transaksi Toko Sembako Junita (Agustus &ndash; Oktober 2026)</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="px-3 py-1.5 rounded-xl bg-sky-50 text-[#0284C7] border border-sky-200 font-bold">Min Support: <?= $hasil['min_support'] ?>% (&ge; <?= $hasil['min_support_count'] ?> transaksi)</span>
+                            <span class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">Min Confidence: <?= $hasil['min_confidence'] ?>%</span>
+                            <span class="px-3 py-1.5 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 font-bold">Min Lift: <?= $hasil['min_lift'] ?></span>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-sky-50/50 border border-sky-100 text-xs">
-                        <strong class="text-[#0284C7] block mb-1">2. Confidence (Kepastian)</strong>
-                        <div class="font-mono text-[11px] bg-white p-2 rounded border border-sky-100 text-slate-800">
-                            Conf(A&rarr;B) = (&sum;Trx A&amp;B / &sum;Trx A) &times; 100%
+                    <!-- TABEL 4.10: Ringkasan Pembentukan Frequent Itemset pada Seluruh Dataset -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[#0284C7]"></span>
+                                <span>Tabel 4.10 Ringkasan Pembentukan Frequent Itemset pada Seluruh Dataset</span>
+                            </h3>
+                            <span class="text-[11px] text-slate-400">Total: 788 Transaksi</span>
                         </div>
-                    </div>
-
-                    <div class="p-3 rounded-xl bg-sky-50/50 border border-sky-100 text-xs">
-                        <strong class="text-[#0284C7] block mb-1">3. Lift Ratio (Korelasi)</strong>
-                        <div class="font-mono text-[11px] bg-white p-2 rounded border border-sky-100 text-slate-800">
-                            Lift = Supp(A&cup;B) / (Supp(A) &times; Supp(B))
+                        <div class="overflow-x-auto border border-sky-100 rounded-2xl">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-sky-50/60 text-slate-700 font-bold uppercase text-[11px]">
+                                    <tr>
+                                        <th class="px-4 py-3">Tahap Pembentukan</th>
+                                        <th class="px-4 py-3 text-center">Jumlah Kandidat</th>
+                                        <th class="px-4 py-3 text-center">Frequent Itemset (Lolos)</th>
+                                        <th class="px-4 py-3">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-sky-100 text-slate-800 bg-white">
+                                    <?php 
+                                        $t410 = $sampel10['tabel_4_10'] ?? [
+                                            ['tahap' => '1-itemset (C1/L1)', 'kandidat' => 95, 'frequent' => 32, 'keterangan' => '32 produk memenuhi minimum support 3%.'],
+                                            ['tahap' => '2-itemset (C2/L2)', 'kandidat' => 496, 'frequent' => 36, 'keterangan' => '36 kombinasi memenuhi minimum support 3%.'],
+                                            ['tahap' => '3-itemset (C3/L3)', 'kandidat' => 19, 'frequent' => 0, 'keterangan' => 'Tidak ada kandidat yang memenuhi minimum support.'],
+                                            ['tahap' => '4-itemset dan seterusnya', 'kandidat' => 'Tidak terbentuk', 'frequent' => 0, 'keterangan' => 'Proses dihentikan karena L3 tidak terbentuk.']
+                                        ];
+                                        foreach ($t410 as $r410): 
+                                    ?>
+                                        <tr class="hover:bg-sky-50/40">
+                                            <td class="px-4 py-2.5 font-bold text-slate-900"><?= esc($r410['tahap']) ?></td>
+                                            <td class="px-4 py-2.5 text-center font-semibold text-slate-700"><?= esc($r410['kandidat']) ?></td>
+                                            <td class="px-4 py-2.5 text-center font-black text-[#0284C7]"><?= esc($r410['frequent']) ?></td>
+                                            <td class="px-4 py-2.5 text-slate-600"><?= esc($r410['keterangan']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
-                        <span class="text-[10px] text-teal-700 font-bold block mt-1">Catatan: Lift &gt; 1 = Hubungan Positif (Valid)</span>
                     </div>
                 </div>
 
-                <!-- Kanan (2/3): Contoh Studi Kasus Nyata Step-by-Step -->
-                <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-md shadow-sky-900/5 border border-sky-100">
-                    <?php if (!empty($kasus)): ?>
-                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
-                            <div>
-                                <h3 class="text-base font-black text-slate-900">Contoh Perhitungan Manual (Data Nyata #1)</h3>
-                                <p class="text-xs text-slate-500">Aturan: <strong class="text-[#0284C7]"><?= esc($kasus['item_a']) ?></strong> &rarr; <strong class="text-indigo-600"><?= esc($kasus['item_b']) ?></strong></p>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-200 text-xs font-bold">Valid &bull; Lift <?= $kasus['lift'] ?></span>
+                <!-- TABEL 4.11: Hasil Aturan Asosiasi pada Seluruh Dataset (22 Aturan Resmi) -->
+                <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden mb-8">
+                    <div class="p-4 sm:p-5 bg-gradient-to-r from-[#0284C7] to-[#0369A1] text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h3 class="text-sm sm:text-base font-black">Tabel 4.11 Hasil Aturan Asosiasi pada Seluruh Dataset</h3>
+                            <p class="text-xs text-sky-100">Daftar 22 aturan asosiasi final yang memenuhi Min Support 3%, Min Confidence 50%, dan Min Lift 1,2</p>
                         </div>
+                        <input type="text" x-model="searchTeknis" placeholder="Cari nama produk di aturan..." 
+                               class="px-3.5 py-1.5 rounded-xl bg-white text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300 w-full sm:w-64 shadow-inner">
+                    </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs bg-sky-50 p-3 rounded-xl border border-sky-200 text-slate-700">
-                            <div>Populasi (N): <strong class="text-slate-900"><?= $kasus['n_total'] ?></strong></div>
-                            <div>Frekuensi A: <strong class="text-slate-900"><?= $kasus['count_a'] ?></strong></div>
-                            <div>Frekuensi B: <strong class="text-slate-900"><?= $kasus['count_b'] ?></strong></div>
-                            <div>Bersama (A&cap;B): <strong class="text-[#0284C7]"><?= $kasus['count_ab'] ?></strong></div>
+                    <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10 text-[11px]">
+                                <tr>
+                                    <th class="px-3 py-3 text-center">No</th>
+                                    <th class="px-4 py-3">Aturan Asosiasi (A &rarr; B)</th>
+                                    <th class="px-3 py-3 text-center">Frekuensi (A / B / AB)</th>
+                                    <th class="px-3 py-3 text-center">Support</th>
+                                    <th class="px-3 py-3 text-center">Confidence</th>
+                                    <th class="px-3 py-3 text-center">Lift Ratio</th>
+                                    <th class="px-3 py-3 text-center">Korelasi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-800">
+                                <?php foreach (($hasil['rules'] ?? []) as $idx => $rule) : ?>
+                                    <?php 
+                                        $cntA  = $rule['count_a'] ?? 0;
+                                        $cntB  = $rule['count_b'] ?? 0;
+                                        $cntAB = $rule['jumlah_transaksi'] ?? 0;
+                                        $confDec = number_format(($rule['confidence'] ?? 0) / 100, 4);
+                                    ?>
+                                    <tr data-search="<?= strtolower(esc($rule['antecedent'] . ' ' . $rule['consequent'])) ?>"
+                                        x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                        class="hover:bg-sky-50/50 transition">
+                                        <td class="px-3 py-3 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
+                                        <td class="px-4 py-3">
+                                            <span class="font-bold text-slate-900"><?= esc($rule['antecedent']) ?></span>
+                                            <span class="text-[#0284C7] font-black mx-1">&rarr;</span>
+                                            <span class="font-bold text-indigo-700"><?= esc($rule['consequent']) ?></span>
+                                        </td>
+                                        <td class="px-3 py-3 text-center font-mono text-[11px] whitespace-nowrap text-slate-600">
+                                            <?= $cntA ?> / <?= $cntB ?> / <strong class="text-slate-900"><?= $cntAB ?></strong>
+                                        </td>
+                                        <td class="px-3 py-3 text-center font-mono text-[11px] whitespace-nowrap">
+                                            <?= $cntAB ?>/<?= $totalTrx ?> = <strong class="text-[#0284C7] font-sans"><?= number_format($rule['support'], 2, ',', '.') ?>%</strong>
+                                        </td>
+                                        <td class="px-3 py-3 text-center font-mono text-[11px] whitespace-nowrap">
+                                            <?= $cntAB ?>/<?= $cntA ?> = <strong class="text-slate-900 font-sans"><?= number_format($rule['confidence'], 2, ',', '.') ?>%</strong>
+                                        </td>
+                                        <td class="px-3 py-3 text-center font-mono text-[11px] whitespace-nowrap">
+                                            <?= $confDec ?> &divide; (<?= $cntB ?>/<?= $totalTrx ?>) = <strong class="text-teal-700 font-sans font-black"><?= $rule['lift_format'] ?? number_format($rule['lift'], 3, ',', '.') ?></strong>
+                                        </td>
+                                        <td class="px-3 py-3 text-center whitespace-nowrap">
+                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border <?= $rule['badge_color'] ?? 'bg-teal-50 text-teal-800 border-teal-200' ?>">
+                                                <?= $rule['korelasi'] ?? 'Korelasi Kuat' ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 bg-sky-50 text-[11px] text-slate-500 border-t border-sky-100 flex items-center justify-between">
+                        <span>Sumber: Hasil pengolahan data transaksi Toko Sembako Junita (2026).</span>
+                        <span class="font-bold text-[#0284C7]">Menampilkan <?= count($hasil['rules'] ?? []) ?> Aturan Asosiasi</span>
+                    </div>
+                </div>
+
+                <!-- SUB-TABS TEKNIS DATASET L2, L1, C1 -->
+                <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden mb-8">
+                    <div class="p-4 bg-slate-800 text-white flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-1.5 bg-black/30 p-1 rounded-xl text-xs">
+                            <button type="button" @click="subTabTeknis = 'l2'" 
+                                    :class="subTabTeknis === 'l2' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
+                                    class="px-3.5 py-1.5 rounded-lg transition">
+                                Frequent 2-Itemset L2 (<?= count($hasil['itemsets_2'] ?? []) ?>)
+                            </button>
+                            <button type="button" @click="subTabTeknis = 'l1'" 
+                                    :class="subTabTeknis === 'l1' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
+                                    class="px-3.5 py-1.5 rounded-lg transition">
+                                Frequent 1-Itemset L1 (<?= count($hasil['itemsets_1'] ?? []) ?>)
+                            </button>
+                            <?php if (!empty($c1Lengkap)): ?>
+                            <button type="button" @click="subTabTeknis = 'c1'" 
+                                    :class="subTabTeknis === 'c1' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
+                                    class="px-3.5 py-1.5 rounded-lg transition">
+                                Calon 1-Itemset C1 (<?= count($c1Lengkap) ?>)
+                            </button>
+                            <?php endif; ?>
                         </div>
+                        <span class="text-xs text-slate-400">Rincian Pembentukan Tingkat Itemset</span>
+                    </div>
 
-                        <div class="space-y-2.5 text-xs font-mono text-slate-800">
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                <span><strong>Langkah 1 (Support A &amp; B):</strong> (<?= $kasus['count_a'] ?>/<?= $kasus['n_total'] ?>)=<strong><?= $kasus['supp_a'] ?>%</strong> | (<?= $kasus['count_b'] ?>/<?= $kasus['n_total'] ?>)=<strong><?= $kasus['supp_b'] ?>%</strong></span>
-                                <span class="text-teal-700 font-sans font-bold">Lolos L1</span>
-                            </div>
+                    <!-- Sub-Tab L2 -->
+                    <div x-show="subTabTeknis === 'l2'" class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10 text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-3 text-center">No</th>
+                                    <th class="px-4 py-3">Pasangan Produk (L2)</th>
+                                    <th class="px-4 py-3 text-center">Frekuensi Bersama</th>
+                                    <th class="px-4 py-3 text-right">Perhitungan Support</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-800">
+                                <?php foreach (($hasil['itemsets_2'] ?? []) as $idx => $it2): ?>
+                                    <tr data-search="<?= strtolower(esc($it2['item_a'] . ' ' . $it2['item_b'])) ?>"
+                                        x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                        class="hover:bg-sky-50/50">
+                                        <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
+                                        <td class="px-4 py-2.5 font-bold text-slate-900">
+                                            <?= esc($it2['item_a']) ?> <span class="text-[#0284C7]">+</span> <?= esc($it2['item_b']) ?>
+                                        </td>
+                                        <td class="px-4 py-2.5 text-center font-semibold"><?= $it2['jumlah_transaksi'] ?> struk</td>
+                                        <td class="px-4 py-2.5 text-right font-black text-[#0284C7] font-mono">
+                                            <?= $it2['jumlah_transaksi'] ?>/<?= $totalTrx ?> = <?= $it2['support'] ?>%
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
 
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                <span><strong>Langkah 2 (Support Pasangan):</strong> (<?= $kasus['count_ab'] ?> / <?= $kasus['n_total'] ?>) &times; 100% = <strong><?= $kasus['supp_ab'] ?>%</strong></span>
-                                <span class="text-teal-700 font-sans font-bold">Lolos L2 (&ge;<?= $kasus['min_support_pct'] ?>%)</span>
-                            </div>
+                    <!-- Sub-Tab L1 -->
+                    <div x-show="subTabTeknis === 'l1'" class="overflow-x-auto max-h-[400px] overflow-y-auto" style="display: none;">
+                        <table class="w-full text-xs text-left">
+                            <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10 text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-3 text-center">No</th>
+                                    <th class="px-4 py-3">Nama Produk (L1)</th>
+                                    <th class="px-4 py-3">Kategori</th>
+                                    <th class="px-4 py-3 text-center">Frekuensi</th>
+                                    <th class="px-4 py-3 text-right">Support (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-800">
+                                <?php foreach (($hasil['itemsets_1'] ?? []) as $idx => $it1): ?>
+                                    <tr data-search="<?= strtolower(esc($it1['nama'] ?? $it1['item'] ?? '')) ?>"
+                                        x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                        class="hover:bg-sky-50/50">
+                                        <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
+                                        <td class="px-4 py-2.5 font-bold text-slate-900"><?= esc($it1['nama'] ?? $it1['item'] ?? '') ?></td>
+                                        <td class="px-4 py-2.5 text-slate-500"><?= esc($it1['kategori'] ?? 'Sembako') ?></td>
+                                        <td class="px-4 py-2.5 text-center font-semibold"><?= $it1['jumlah_transaksi'] ?> struk</td>
+                                        <td class="px-4 py-2.5 text-right font-black text-[#0284C7] font-mono">
+                                            <?= $it1['jumlah_transaksi'] ?>/<?= $totalTrx ?> = <?= $it1['support'] ?>%
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
 
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                <span><strong>Langkah 3 (Confidence A&rarr;B):</strong> (<?= $kasus['count_ab'] ?> / <?= $kasus['count_a'] ?>) &times; 100% = <strong><?= $kasus['confidence'] ?>%</strong></span>
-                                <span class="text-teal-700 font-sans font-bold">Lolos (&ge;<?= $kasus['min_conf_pct'] ?>%)</span>
-                            </div>
-
-                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                <span><strong>Langkah 4 (Lift Ratio):</strong> <?= ($kasus['supp_ab']/100) ?> / (<?= ($kasus['supp_a']/100) ?> &times; <?= ($kasus['supp_b']/100) ?>) = <strong><?= $kasus['lift'] ?></strong></span>
-                                <span class="text-teal-700 font-sans font-bold">Korelasi Kuat (&gt;1.0)</span>
-                            </div>
-                        </div>
-
-                        <p class="mt-3 text-xs text-teal-900 bg-teal-50 p-3 rounded-xl border border-teal-200 leading-relaxed">
-                            <strong>Kesimpulan:</strong> Karena Support (<?= $kasus['supp_ab'] ?>%), Confidence (<?= $kasus['confidence'] ?>%), dan Lift (<?= $kasus['lift'] ?>) semuanya melampaui ambang batas, aturan ini valid secara matematis.
-                        </p>
-                    <?php else: ?>
-                        <p class="text-center text-slate-500 py-8 text-xs">Data studi kasus belum tersedia untuk parameter ini.</p>
+                    <!-- Sub-Tab C1 -->
+                    <?php if (!empty($c1Lengkap)): ?>
+                    <div x-show="subTabTeknis === 'c1'" class="overflow-x-auto max-h-[400px] overflow-y-auto" style="display: none;">
+                        <table class="w-full text-xs text-left">
+                            <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10 text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-3 text-center">No</th>
+                                    <th class="px-4 py-3">Calon Produk (C1)</th>
+                                    <th class="px-4 py-3 text-center">Frekuensi</th>
+                                    <th class="px-4 py-3 text-right">Support (%)</th>
+                                    <th class="px-4 py-3 text-center">Status Seleksi L1</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-800">
+                                <?php foreach ($c1Lengkap as $idx => $c1): ?>
+                                    <?php $isLolos = ($c1['status'] ?? '') === 'Lolos L1'; ?>
+                                    <tr data-search="<?= strtolower(esc($c1['nama'] ?? '')) ?>"
+                                        x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
+                                        class="hover:bg-sky-50/50">
+                                        <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
+                                        <td class="px-4 py-2.5 font-medium text-slate-900"><?= esc($c1['nama'] ?? '') ?></td>
+                                        <td class="px-4 py-2.5 text-center"><?= $c1['jumlah_transaksi'] ?> struk</td>
+                                        <td class="px-4 py-2.5 text-right font-bold"><?= $c1['support'] ?>%</td>
+                                        <td class="px-4 py-2.5 text-center">
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $isLolos ? 'bg-teal-50 text-teal-800 border border-teal-200' : 'bg-red-50 text-red-700 border border-red-200' ?>">
+                                                <?= esc($c1['status']) ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <!-- 3. TABEL DATA RINCIAN TEKNIS (DENGAN PENCARIAN & 4 SUB-TAB) -->
-            <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden mb-8">
-                <div class="p-4 bg-[#0369A1] text-white flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-                    <div class="flex flex-wrap items-center gap-1.5 bg-black/15 p-1 rounded-xl text-xs">
-                        <button type="button" @click="subTabTeknis = 'rules'" 
-                                :class="subTabTeknis === 'rules' ? 'bg-white text-[#0369A1] font-bold shadow' : 'text-white/85 hover:text-white'"
-                                class="px-3 py-1.5 rounded-lg transition">
-                            Aturan Asosiasi (<?= count($hasil['rules'] ?? []) ?>)
-                        </button>
-                        <button type="button" @click="subTabTeknis = 'l2'" 
-                                :class="subTabTeknis === 'l2' ? 'bg-white text-[#0369A1] font-bold shadow' : 'text-white/85 hover:text-white'"
-                                class="px-3 py-1.5 rounded-lg transition">
-                            Frequent L2 (<?= count($hasil['itemsets_2'] ?? []) ?>)
-                        </button>
-                        <button type="button" @click="subTabTeknis = 'l1'" 
-                                :class="subTabTeknis === 'l1' ? 'bg-white text-[#0369A1] font-bold shadow' : 'text-white/85 hover:text-white'"
-                                class="px-3 py-1.5 rounded-lg transition">
-                            Frequent L1 (<?= count($hasil['itemsets_1'] ?? []) ?>)
-                        </button>
-                        <?php if (!empty($c1Lengkap)): ?>
-                        <button type="button" @click="subTabTeknis = 'c1'" 
-                                :class="subTabTeknis === 'c1' ? 'bg-white text-[#0369A1] font-bold shadow' : 'text-white/85 hover:text-white'"
-                                class="px-3 py-1.5 rounded-lg transition">
-                            Seleksi C1 (<?= count($c1Lengkap) ?>)
-                        </button>
-                        <?php endif; ?>
+            <!-- =============================================================== -->
+            <!-- SUB-VIEW 2: SIMULASI MANUAL 10 SAMPEL PERTAMA (BAB 4 SKRIPSI)  -->
+            <!-- =============================================================== -->
+            <div x-show="subPerhitunganMode === 'sampel10'" style="display: none;">
+                
+                <!-- Box Penjelasan Bab 4 Sampel 10 -->
+                <div class="bg-gradient-to-br from-sky-50 to-blue-50/50 p-6 rounded-3xl border border-sky-200 shadow-sm mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-2xl bg-[#0284C7] text-white flex items-center justify-center shrink-0 shadow-md shadow-sky-500/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-black text-slate-900">Perhitungan Manual 10 Sampel Transaksi Pertama (Bab 4 Skripsi)</h3>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                Sesuai penjelasan pada Bab 4 Skripsi, untuk memperlihatkan proses perhitungan secara manual langkah demi langkah, digunakan <strong>10 transaksi pertama</strong> berdasarkan urutan kemunculan nomor transaksi pada dataset. Sampel ini hanya digunakan sebagai ilustrasi perhitungan, sedangkan hasil utama penelitian diperoleh dari pengolahan seluruh 788 transaksi.
+                            </p>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                Pada sampel 10 transaksi, batas minimum frekuensi untuk minimum support 3% dihitung sebesar <strong>3% &times; 10 = 0,3 transaksi</strong>. Karena frekuensi transaksi harus bilangan bulat, itemset harus muncul sekurang-kurangnya <strong>1 kali</strong> agar memenuhi batas tersebut (sehingga support itemset minimal 10% dan tetap memenuhi minimum support 3%).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parameter Sampel (Tabel 4.2) -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md shadow-sky-900/5 border border-sky-100 mb-6">
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-teal-600"></span>
+                        <span>Tabel 4.2 Parameter Algoritma Apriori</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        <div class="p-4 rounded-2xl bg-sky-50/70 border border-sky-200">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase block">Minimum Support</span>
+                            <div class="text-lg font-black text-[#0284C7] mt-0.5">3% <span class="text-xs font-normal text-slate-600">(&ge; 1 transaksi pada sampel)</span></div>
+                            <p class="text-[11px] text-slate-500 mt-1">Batas minimum kemunculan itemset dalam seluruh transaksi sampel.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase block">Minimum Confidence</span>
+                            <div class="text-lg font-black text-indigo-700 mt-0.5">50%</div>
+                            <p class="text-[11px] text-slate-500 mt-1">Batas minimum tingkat kepercayaan aturan asosiasi.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-200">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase block">Minimum Lift Ratio</span>
+                            <div class="text-lg font-black text-teal-700 mt-0.5">1,2</div>
+                            <p class="text-[11px] text-slate-500 mt-1">Batas minimum kekuatan asosiasi dibandingkan kondisi independen.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABEL 4.1: Sampel 10 Transaksi Pertama -->
+                <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden mb-6">
+                    <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xs sm:text-sm font-black">Tabel 4.1 Sampel 10 Transaksi Pertama</h4>
+                            <p class="text-[11px] text-slate-400">Kode transaksi T1 sampai T10 digunakan untuk memudahkan penelusuran perhitungan manual</p>
+                        </div>
+                        <span class="text-xs bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-1 rounded-lg font-bold">10 Struk Pertama</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 text-[11px]">
+                                <tr>
+                                    <th class="px-3 py-3 text-center">No</th>
+                                    <th class="px-3 py-3 text-center">Kode</th>
+                                    <th class="px-3 py-3 text-center">Tanggal</th>
+                                    <th class="px-4 py-3">Nomor Transaksi</th>
+                                    <th class="px-4 py-3">Produk yang Dibeli</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-800">
+                                <?php foreach (($sampel10['tabel_4_1'] ?? []) as $t1): ?>
+                                    <tr class="hover:bg-sky-50/40">
+                                        <td class="px-3 py-2.5 text-center font-bold text-slate-400"><?= $t1['no'] ?></td>
+                                        <td class="px-3 py-2.5 text-center font-black text-[#0284C7] bg-sky-50/50"><?= $t1['kode'] ?></td>
+                                        <td class="px-3 py-2.5 text-center whitespace-nowrap text-slate-600"><?= $t1['tanggal'] ?></td>
+                                        <td class="px-4 py-2.5 font-mono text-[11px] text-slate-700"><?= $t1['no_transaksi'] ?></td>
+                                        <td class="px-4 py-2.5 font-medium text-slate-900"><?= esc($t1['produk_list']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- DUA KOLOM: TABEL 4.3 (L1) & TABEL 4.4 (L2) PADA SAMPEL -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    
+                    <!-- Kiri: TABEL 4.3 (L1 pada Sampel - 17 Produk) -->
+                    <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden">
+                        <div class="p-4 bg-[#0284C7] text-white">
+                            <h4 class="text-xs sm:text-sm font-black">Tabel 4.3 Hasil Perhitungan Frequent 1-Itemset (L1)</h4>
+                            <p class="text-[11px] text-sky-100">17 produk berbeda pada sampel, seluruhnya muncul &ge; 1 kali (Support &ge; 3%)</p>
+                        </div>
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 text-[10px]">
+                                    <tr>
+                                        <th class="px-2 py-2.5 text-center">No</th>
+                                        <th class="px-3 py-2.5">Nama Produk</th>
+                                        <th class="px-2 py-2.5 text-center">Transaksi</th>
+                                        <th class="px-2 py-2.5 text-center">Freq</th>
+                                        <th class="px-3 py-2.5 text-right">Support</th>
+                                        <th class="px-2 py-2.5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-800">
+                                    <?php foreach (($sampel10['tabel_4_3'] ?? []) as $it1): ?>
+                                        <tr class="hover:bg-sky-50/40">
+                                            <td class="px-2 py-2 text-center text-slate-400 font-bold"><?= $it1['no'] ?></td>
+                                            <td class="px-3 py-2 font-bold text-slate-900"><?= esc($it1['nama']) ?></td>
+                                            <td class="px-2 py-2 text-center font-mono text-[10px] text-slate-600"><?= esc($it1['transaksi']) ?></td>
+                                            <td class="px-2 py-2 text-center font-bold text-slate-800"><?= $it1['frekuensi'] ?></td>
+                                            <td class="px-3 py-2 text-right font-mono text-[11px] text-[#0284C7] whitespace-nowrap"><?= esc($it1['support']) ?></td>
+                                            <td class="px-2 py-2 text-center">
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200"><?= $it1['status'] ?></span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <input type="text" x-model="searchTeknis" placeholder="Cari produk dalam tabel teknis..." 
-                           class="px-3 py-1.5 rounded-xl bg-white text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300 w-full lg:w-64">
+                    <!-- Kanan: TABEL 4.4 (L2 pada Sampel - 27 Kombinasi) -->
+                    <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden">
+                        <div class="p-4 bg-indigo-700 text-white">
+                            <h4 class="text-xs sm:text-sm font-black">Tabel 4.4 Hasil Perhitungan Frequent 2-Itemset (L2)</h4>
+                            <p class="text-[11px] text-indigo-100">Dari C(17,2)=136 kandidat, terdapat 27 pasangan yang muncul &ge; 1 kali</p>
+                        </div>
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 text-[10px]">
+                                    <tr>
+                                        <th class="px-2 py-2.5 text-center">No</th>
+                                        <th class="px-3 py-2.5">Kombinasi Produk (L2)</th>
+                                        <th class="px-2 py-2.5 text-center">Transaksi</th>
+                                        <th class="px-2 py-2.5 text-center">Freq</th>
+                                        <th class="px-3 py-2.5 text-right">Support</th>
+                                        <th class="px-2 py-2.5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-800">
+                                    <?php foreach (($sampel10['tabel_4_4'] ?? []) as $it2): ?>
+                                        <tr class="hover:bg-sky-50/40">
+                                            <td class="px-2 py-2 text-center text-slate-400 font-bold"><?= $it2['no'] ?></td>
+                                            <td class="px-3 py-2 font-bold text-slate-900"><?= esc($it2['kombinasi']) ?></td>
+                                            <td class="px-2 py-2 text-center font-mono text-[10px] text-slate-600"><?= esc($it2['transaksi']) ?></td>
+                                            <td class="px-2 py-2 text-center font-bold text-slate-800"><?= $it2['frekuensi'] ?></td>
+                                            <td class="px-3 py-2 text-right font-mono text-[11px] text-indigo-700 whitespace-nowrap"><?= esc($it2['support']) ?></td>
+                                            <td class="px-2 py-2 text-center">
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200"><?= $it2['status'] ?></span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Sub-Tab 1: Rules -->
-                <div x-show="subTabTeknis === 'rules'" class="overflow-x-auto max-h-[450px] overflow-y-auto">
-                    <table class="w-full text-xs text-left">
-                        <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10">
-                            <tr>
-                                <th class="px-4 py-3 text-center">No</th>
-                                <th class="px-4 py-3">Aturan (Antecedent &rarr; Consequent)</th>
-                                <th class="px-4 py-3 text-center">Support</th>
-                                <th class="px-4 py-3 text-center">Confidence</th>
-                                <th class="px-4 py-3 text-center">Lift Ratio</th>
-                                <th class="px-4 py-3 text-center">Korelasi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-800">
-                            <?php foreach (($hasil['rules'] ?? []) as $idx => $rule) : ?>
-                                <tr data-search="<?= strtolower(esc($rule['antecedent'] . ' ' . $rule['consequent'])) ?>"
-                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
-                                    class="hover:bg-sky-50/50">
-                                    <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
-                                    <td class="px-4 py-2.5">
-                                        JIKA <strong class="text-[#0284C7]"><?= esc($rule['antecedent']) ?></strong> &rarr; MAKA <strong class="text-indigo-700"><?= esc($rule['consequent']) ?></strong>
-                                    </td>
-                                    <td class="px-4 py-2.5 text-center"><?= $rule['support'] ?>% (<?= $rule['jumlah_transaksi'] ?? 0 ?>)</td>
-                                    <td class="px-4 py-2.5 text-center font-bold"><?= $rule['confidence'] ?>%</td>
-                                    <td class="px-4 py-2.5 text-center font-black text-teal-700"><?= $rule['lift'] ?></td>
-                                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border <?= $rule['badge_color'] ?? 'bg-emerald-100 text-emerald-800' ?>">
-                                            <?= $rule['korelasi'] ?? 'Korelasi Positif' ?>
-                                        </span>
-                                    </td>
+                <!-- TABEL 4.8: Ringkasan Pembentukan Frequent Itemset pada Sampel (C1 s.d. C6) -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md shadow-sky-900/5 border border-sky-100 mb-6">
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-[#0284C7]"></span>
+                        <span>Tabel 4.8 Ringkasan Pembentukan Frequent Itemset pada Sampel</span>
+                    </h4>
+                    <div class="overflow-x-auto border border-sky-100 rounded-2xl">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-sky-50/60 text-slate-700 font-bold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-3">Tahap</th>
+                                    <th class="px-4 py-3 text-center">Jumlah Kandidat</th>
+                                    <th class="px-4 py-3 text-center">Frequent Itemset (Lolos)</th>
+                                    <th class="px-4 py-3">Keterangan</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="divide-y divide-sky-100 text-slate-800 bg-white">
+                                <?php foreach (($sampel10['tabel_4_8'] ?? []) as $r48): ?>
+                                    <tr class="hover:bg-sky-50/40">
+                                        <td class="px-4 py-2.5 font-bold text-slate-900"><?= esc($r48['tahap']) ?></td>
+                                        <td class="px-4 py-2.5 text-center font-semibold"><?= esc($r48['kandidat']) ?></td>
+                                        <td class="px-4 py-2.5 text-center font-black text-[#0284C7]"><?= esc($r48['frequent']) ?></td>
+                                        <td class="px-4 py-2.5 text-slate-600"><?= esc($r48['keterangan']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <!-- Sub-Tab 2: L2 -->
-                <div x-show="subTabTeknis === 'l2'" class="overflow-x-auto max-h-[450px] overflow-y-auto" style="display: none;">
-                    <table class="w-full text-xs text-left">
-                        <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10">
-                            <tr>
-                                <th class="px-4 py-3 text-center">No</th>
-                                <th class="px-4 py-3">Pasangan Produk (L2)</th>
-                                <th class="px-4 py-3 text-center">Transaksi Bersama</th>
-                                <th class="px-4 py-3 text-right">Support (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-800">
-                            <?php foreach (($hasil['itemsets_2'] ?? []) as $idx => $it2): ?>
-                                <tr data-search="<?= strtolower(esc($it2['item_a'] . ' ' . $it2['item_b'])) ?>"
-                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
-                                    class="hover:bg-sky-50/50">
-                                    <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
-                                    <td class="px-4 py-2.5 font-bold text-slate-900">
-                                        <?= esc($it2['item_a']) ?> <span class="text-[#0284C7]">+</span> <?= esc($it2['item_b']) ?>
-                                    </td>
-                                    <td class="px-4 py-2.5 text-center font-semibold"><?= $it2['jumlah_transaksi'] ?> struk</td>
-                                    <td class="px-4 py-2.5 text-right font-black text-[#0284C7]"><?= $it2['support'] ?>%</td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                <!-- TABEL 4.9: Contoh Rincian & Perhitungan Aturan Asosiasi Sampel -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md shadow-sky-900/5 border border-sky-100 mb-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-sky-100 pb-3 mb-4">
+                        <div>
+                            <h4 class="text-xs sm:text-sm font-black text-slate-900">Tabel 4.9 Rincian Transaksi untuk Perhitungan Aturan Asosiasi pada Sampel</h4>
+                            <p class="text-xs text-slate-500">Studi Kasus: <strong>Margarin Blue Band 200g &rarr; Teh Celup SariWangi 25 sachet</strong></p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 text-xs font-bold">Lolos Semua Syarat &bull; Lift 2,50</span>
+                    </div>
 
-                <!-- Sub-Tab 3: L1 -->
-                <div x-show="subTabTeknis === 'l1'" class="overflow-x-auto max-h-[450px] overflow-y-auto" style="display: none;">
-                    <table class="w-full text-xs text-left">
-                        <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10">
-                            <tr>
-                                <th class="px-4 py-3 text-center">No</th>
-                                <th class="px-4 py-3">Nama Produk (L1)</th>
-                                <th class="px-4 py-3">Kategori</th>
-                                <th class="px-4 py-3 text-center">Frekuensi</th>
-                                <th class="px-4 py-3 text-right">Support (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-800">
-                            <?php foreach (($hasil['itemsets_1'] ?? []) as $idx => $it1): ?>
-                                <tr data-search="<?= strtolower(esc($it1['nama'] ?? $it1['item'] ?? '')) ?>"
-                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
-                                    class="hover:bg-sky-50/50">
-                                    <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
-                                    <td class="px-4 py-2.5 font-bold text-slate-900"><?= esc($it1['nama'] ?? $it1['item'] ?? '') ?></td>
-                                    <td class="px-4 py-2.5 text-slate-500"><?= esc($it1['kategori'] ?? 'Sembako') ?></td>
-                                    <td class="px-4 py-2.5 text-center font-semibold"><?= $it1['jumlah_transaksi'] ?> struk</td>
-                                    <td class="px-4 py-2.5 text-right font-black text-[#0284C7]"><?= $it1['support'] ?>%</td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                    <?php $t49 = $sampel10['tabel_4_9'] ?? []; ?>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                        <!-- Tabel Kiri: Rincian Frekuensi -->
+                        <div class="overflow-x-auto border border-sky-100 rounded-2xl">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Keterangan</th>
+                                        <th class="px-3 py-2.5 text-center">Kode Transaksi</th>
+                                        <th class="px-3 py-2.5 text-center">Frekuensi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-800 bg-white">
+                                    <tr>
+                                        <td class="px-3 py-2 font-bold text-slate-900">Margarin Blue Band 200g (A)</td>
+                                        <td class="px-3 py-2 text-center font-mono text-[11px] text-slate-600"><?= $t49['trx_a'] ?? 'T8, T9, T10' ?></td>
+                                        <td class="px-3 py-2 text-center font-bold text-[#0284C7]"><?= $t49['freq_a'] ?? 3 ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2 font-bold text-slate-900">Teh Celup SariWangi 25 sachet (B)</td>
+                                        <td class="px-3 py-2 text-center font-mono text-[11px] text-slate-600"><?= $t49['trx_b'] ?? 'T4, T8, T9, T10' ?></td>
+                                        <td class="px-3 py-2 text-center font-bold text-indigo-700"><?= $t49['freq_b'] ?? 4 ?></td>
+                                    </tr>
+                                    <tr class="bg-sky-50/30">
+                                        <td class="px-3 py-2 font-black text-slate-900">A dan B muncul bersama</td>
+                                        <td class="px-3 py-2 text-center font-mono text-[11px] font-bold text-[#0284C7]"><?= $t49['trx_ab'] ?? 'T8, T9, T10' ?></td>
+                                        <td class="px-3 py-2 text-center font-black text-[#0284C7]"><?= $t49['freq_ab'] ?? 3 ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2 text-slate-600">Jumlah seluruh transaksi sampel</td>
+                                        <td class="px-3 py-2 text-center font-mono text-[11px] text-slate-500">T1&ndash;T10</td>
+                                        <td class="px-3 py-2 text-center font-bold text-slate-700"><?= $t49['total_sampel'] ?? 10 ?></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                <!-- Sub-Tab 4: C1 Lengkap (Lolos & Tereliminasi) -->
-                <?php if (!empty($c1Lengkap)): ?>
-                <div x-show="subTabTeknis === 'c1'" class="overflow-x-auto max-h-[450px] overflow-y-auto" style="display: none;">
-                    <table class="w-full text-xs text-left">
-                        <thead class="sticky top-0 bg-slate-50 text-slate-600 uppercase font-bold border-b border-sky-100 z-10">
-                            <tr>
-                                <th class="px-4 py-3 text-center">No</th>
-                                <th class="px-4 py-3">Calon Produk (C1)</th>
-                                <th class="px-4 py-3 text-center">Frekuensi</th>
-                                <th class="px-4 py-3 text-right">Support (%)</th>
-                                <th class="px-4 py-3 text-center">Status Seleksi L1</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-800">
-                            <?php foreach ($c1Lengkap as $idx => $c1): ?>
-                                <?php $isLolos = ($c1['status'] ?? '') === 'Lolos L1'; ?>
-                                <tr data-search="<?= strtolower(esc($c1['nama'] ?? '')) ?>"
-                                    x-show="searchTeknis === '' || $el.dataset.search.includes(searchTeknis.toLowerCase())"
-                                    class="hover:bg-sky-50/50">
-                                    <td class="px-4 py-2.5 text-center font-bold text-slate-400"><?= $idx + 1 ?></td>
-                                    <td class="px-4 py-2.5 font-medium text-slate-900"><?= esc($c1['nama'] ?? '') ?></td>
-                                    <td class="px-4 py-2.5 text-center"><?= $c1['jumlah_transaksi'] ?> struk</td>
-                                    <td class="px-4 py-2.5 text-right font-bold"><?= $c1['support'] ?>%</td>
-                                    <td class="px-4 py-2.5 text-center">
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $isLolos ? 'bg-teal-50 text-teal-800 border border-teal-200' : 'bg-red-50 text-red-700 border border-red-200' ?>">
-                                            <?= esc($c1['status']) ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                        <!-- Kanan: 3 Langkah Rumus & Perhitungan -->
+                        <div class="space-y-2.5 font-mono text-[11px] text-slate-800">
+                            <div class="p-3 rounded-2xl bg-sky-50/70 border border-sky-200">
+                                <span class="font-sans font-bold text-[#0284C7] block mb-0.5">1) Perhitungan Support:</span>
+                                <div>Support(A &rarr; B) = (3 / 10) &times; 100% = <strong>30%</strong></div>
+                                <span class="font-sans text-[10px] text-teal-700 font-semibold block mt-0.5">&bull; Memenuhi minimum support sebesar 3%</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-200">
+                                <span class="font-sans font-bold text-indigo-700 block mb-0.5">2) Perhitungan Confidence:</span>
+                                <div>Confidence(A &rarr; B) = (3 / 3) &times; 100% = <strong>100%</strong></div>
+                                <span class="font-sans text-[10px] text-teal-700 font-semibold block mt-0.5">&bull; Memenuhi minimum confidence sebesar 50%</span>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-teal-50/70 border border-teal-200">
+                                <span class="font-sans font-bold text-teal-800 block mb-0.5">3) Perhitungan Lift Ratio:</span>
+                                <div>Lift(A &rarr; B) = 1,00 / (4 / 10) = <strong>2,50</strong></div>
+                                <span class="font-sans text-[10px] text-teal-700 font-semibold block mt-0.5">&bull; Memenuhi minimum lift 1,2 (Korelasi Kuat)</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <?php endif; ?>
 
             </div>
 

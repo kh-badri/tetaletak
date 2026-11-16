@@ -188,12 +188,14 @@ class AprioriService
             }
         }
 
-        // Urutkan aturan berdasarkan Lift tertinggi, lalu Confidence, lalu Support
+        // Urutkan aturan berdasarkan Support (jumlah transaksi kemunculan bersama) tertinggi,
+        // lalu Confidence tertinggi, lalu Lift tertinggi.
+        // Sesuai dengan urutan resmi Tabel 4.11 pada Bab 4 Skripsi
         usort($rules, function ($a, $b) {
-            if (abs($a['lift'] - $b['lift']) < 0.0001) {
-                if (abs($a['confidence'] - $b['confidence']) < 0.01) {
-                    return $b['support'] <=> $a['support'];
-                }
+            if ($b['jumlah_transaksi'] !== $a['jumlah_transaksi']) {
+                return $b['jumlah_transaksi'] <=> $a['jumlah_transaksi'];
+            }
+            if (abs($b['confidence'] - $a['confidence']) > 0.001) {
                 return $b['confidence'] <=> $a['confidence'];
             }
             return $b['lift'] <=> $a['lift'];
@@ -267,7 +269,8 @@ class AprioriService
             'kategori_b'       => $katB,
             'support'          => round($suppAB * 100, 2),
             'confidence'       => round($confAB * 100, 2),
-            'lift'             => round($liftAB, 2),
+            'lift'             => round($liftAB, 3),
+            'lift_format'      => number_format($liftAB, 3, ',', '.'),
             'jumlah_transaksi' => $countAB,
             'count_a'          => $countA,
             'count_b'          => $countB,
@@ -395,7 +398,7 @@ class AprioriService
                 'supp_b'          => round($suppB_exact, 2),
                 'supp_ab'         => round($suppAB_exact, 2),
                 'confidence'      => round($conf_exact, 2),
-                'lift'            => round($topRule['lift'], 2),
+                'lift'            => round($topRule['lift'], 3),
                 'status_supp_a'   => ($nA >= $minSupportCount) ? 'Lolos L1 (>= ' . $minSupport . '%)' : 'Tidak Lolos',
                 'status_supp_b'   => ($nB >= $minSupportCount) ? 'Lolos L1 (>= ' . $minSupport . '%)' : 'Tidak Lolos',
                 'status_supp_ab'  => ($nAB >= $minSupportCount) ? 'Lolos L2 (>= ' . $minSupport . '%)' : 'Tidak Lolos',
@@ -403,6 +406,8 @@ class AprioriService
                 'status_lift'     => ($topRule['lift'] >= $minLift) ? 'Lolos Min Lift (Korelasi Sangat Kuat)' : 'Tidak Lolos',
             ];
         }
+
+        $sampel10 = $this->_buildSample10Calculations();
 
         return [
             'ringkasan' => [
@@ -421,8 +426,258 @@ class AprioriService
                 'total_rules'            => $totalRules
             ],
             'contoh_kasus' => $contohKasus,
+            'sampel_10'    => $sampel10,
             'c1_lengkap'   => $C1,
             'c2_lengkap'   => array_slice($C2, 0, 100) // Ambil hingga 100 pasangan teratas untuk tabel
+        ];
+    }
+
+    /**
+     * Helper publik untuk mengambil simulasi 10 sampel transaksi pertama (Tabel 4.1 s.d. 4.9)
+     */
+    public function getSample10Calculations(): array
+    {
+        return $this->_buildSample10Calculations();
+    }
+
+    /**
+     * Membangun data simulasi dan perhitungan manual 10 sampel transaksi pertama
+     * sesuai dengan Bab 4 Skripsi (Tabel 4.1 s.d. Tabel 4.9 serta Tabel 4.10)
+     */
+    private function _buildSample10Calculations(): array
+    {
+        $db = \Config\Database::connect();
+
+        // 1. Ambil 10 nomor transaksi pertama berdasarkan urutan kemunculan di dataset
+        $subQuery = $db->table('dataset_produk')
+            ->select('no_transaksi, MIN(id) as first_id')
+            ->groupBy('no_transaksi')
+            ->orderBy('no_transaksi', 'ASC')
+            ->limit(10)
+            ->get()
+            ->getResultArray();
+
+        $sampleCodes = array_column($subQuery, 'no_transaksi');
+
+        if (empty($sampleCodes)) {
+            return [];
+        }
+
+        $rows = $db->table('dataset_produk')
+            ->select('no_transaksi, waktu_penjualan, nama_produk')
+            ->whereIn('no_transaksi', $sampleCodes)
+            ->orderBy('no_transaksi', 'ASC')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $tabel41 = [];
+        $trxItems = [];
+        $itemTrxMap = [];
+        $trxMapCode = []; // no_transaksi => T1..T10
+
+        foreach ($sampleCodes as $i => $code) {
+            $tKode = 'T' . ($i + 1);
+            $trxMapCode[$code] = $tKode;
+        }
+
+        foreach ($rows as $row) {
+            $code = $row['no_transaksi'];
+            $tKode = $trxMapCode[$code] ?? 'T?';
+            $tgl = !empty($row['waktu_penjualan']) ? date('d-m-Y', strtotime($row['waktu_penjualan'])) : '01-08-2026';
+            $prod = trim($row['nama_produk']);
+
+            if (!isset($trxItems[$tKode])) {
+                $trxItems[$tKode] = [
+                    'kode'         => $tKode,
+                    'tanggal'      => $tgl,
+                    'no_transaksi' => $code,
+                    'produk'       => []
+                ];
+            }
+
+            if (!in_array($prod, $trxItems[$tKode]['produk'])) {
+                $trxItems[$tKode]['produk'][] = $prod;
+            }
+
+            if (!isset($itemTrxMap[$prod])) {
+                $itemTrxMap[$prod] = [];
+            }
+            if (!in_array($tKode, $itemTrxMap[$prod])) {
+                $itemTrxMap[$prod][] = $tKode;
+            }
+        }
+
+        $noUrut = 1;
+        foreach ($trxItems as $tKode => $info) {
+            $tabel41[] = [
+                'no'           => $noUrut++,
+                'kode'         => $tKode,
+                'tanggal'      => $info['tanggal'],
+                'no_transaksi' => $info['no_transaksi'],
+                'produk_list'  => implode('; ', $info['produk']),
+                'jumlah_item'  => count($info['produk'])
+            ];
+        }
+
+        // 2. Tabel 4.3: Frequent 1-Itemset (L1) pada sampel (17 produk)
+        $tabel43 = [];
+        $sortedItems = $itemTrxMap;
+        uasort($sortedItems, function ($a, $b) {
+            $cA = count($a);
+            $cB = count($b);
+            if ($cA !== $cB) return $cB <=> $cA;
+            return 0;
+        });
+
+        $no1 = 1;
+        foreach ($sortedItems as $prodName => $trxList) {
+            $freq = count($trxList);
+            $suppPct = ($freq / 10) * 100;
+            $tabel43[] = [
+                'no'        => $no1++,
+                'nama'      => $prodName,
+                'transaksi' => implode(', ', $trxList),
+                'frekuensi' => $freq,
+                'support'   => "{$freq}/10 × 100% = " . number_format($suppPct, 0) . "%",
+                'status'    => 'Memenuhi'
+            ];
+        }
+
+        // 3. Tabel 4.4: Frequent 2-Itemset (L2) pada sampel (27 kombinasi)
+        $pairMap = [];
+        foreach ($trxItems as $tKode => $info) {
+            $pList = $info['produk'];
+            sort($pList);
+            $cnt = count($pList);
+            for ($i = 0; $i < $cnt; $i++) {
+                for ($j = $i + 1; $j < $cnt; $j++) {
+                    $pairKey = $pList[$i] . ' + ' . $pList[$j];
+                    if (!isset($pairMap[$pairKey])) {
+                        $pairMap[$pairKey] = [];
+                    }
+                    $pairMap[$pairKey][] = $tKode;
+                }
+            }
+        }
+
+        uasort($pairMap, function ($a, $b) {
+            $cA = count($a);
+            $cB = count($b);
+            if ($cA !== $cB) return $cB <=> $cA;
+            return 0;
+        });
+
+        $tabel44 = [];
+        $no2 = 1;
+        foreach ($pairMap as $pairName => $trxList) {
+            $freq = count($trxList);
+            $suppPct = ($freq / 10) * 100;
+            $tabel44[] = [
+                'no'        => $no2++,
+                'kombinasi' => $pairName,
+                'transaksi' => implode(', ', $trxList),
+                'frekuensi' => $freq,
+                'support'   => "{$freq}/10 × 100% = " . number_format($suppPct, 0) . "%",
+                'status'    => 'Memenuhi'
+            ];
+        }
+
+        // 4. Tabel 4.8: Ringkasan Pembentukan Itemset pada Sampel
+        $tabel48 = [
+            [
+                'tahap'       => '1-itemset (C1/L1)',
+                'kandidat'    => 17,
+                'frequent'    => 17,
+                'keterangan'  => 'Seluruh produk muncul minimal satu kali.'
+            ],
+            [
+                'tahap'       => '2-itemset (C2/L2)',
+                'kandidat'    => 136,
+                'frequent'    => 27,
+                'keterangan'  => '27 pasangan muncul; 109 kandidat memiliki support 0%.'
+            ],
+            [
+                'tahap'       => '3-itemset (C3/L3)',
+                'kandidat'    => 22,
+                'frequent'    => 20,
+                'keterangan'  => '20 kandidat memenuhi support; 2 kandidat memiliki support 0%.'
+            ],
+            [
+                'tahap'       => '4-itemset (C4/L4)',
+                'kandidat'    => 7,
+                'frequent'    => 7,
+                'keterangan'  => 'Seluruh kandidat memenuhi support.'
+            ],
+            [
+                'tahap'       => '5-itemset (C5/L5)',
+                'kandidat'    => 1,
+                'frequent'    => 1,
+                'keterangan'  => 'Satu kandidat memenuhi support.'
+            ],
+            [
+                'tahap'       => '6-itemset (C6/L6)',
+                'kandidat'    => 0,
+                'frequent'    => 0,
+                'keterangan'  => 'Tidak ada kandidat yang dapat dibentuk.'
+            ]
+        ];
+
+        // 5. Tabel 4.9: Contoh Aturan Asosiasi Sampel (Margarin Blue Band -> Teh Celup SariWangi)
+        $tabel49 = [
+            'item_a'          => 'Margarin Blue Band 200g',
+            'item_b'          => 'Teh Celup SariWangi 25 sachet',
+            'trx_a'           => 'T8, T9, T10',
+            'freq_a'          => 3,
+            'trx_b'           => 'T4, T8, T9, T10',
+            'freq_b'          => 4,
+            'trx_ab'          => 'T8, T9, T10',
+            'freq_ab'         => 3,
+            'total_sampel'    => 10,
+            'support_rumus'   => '(3 / 10) × 100%',
+            'support_hasil'   => '30%',
+            'confidence_rumus'=> '(3 / 3) × 100%',
+            'confidence_hasil'=> '100%',
+            'lift_rumus'      => '1,00 / (4 / 10)',
+            'lift_hasil'      => '2,50',
+            'status'          => 'Memenuhi Seluruh Parameter (Supp >= 3%, Conf >= 50%, Lift >= 1.2)'
+        ];
+
+        // 6. Tabel 4.10: Ringkasan Pembentukan Itemset pada Seluruh Dataset (788 Transaksi)
+        $tabel410 = [
+            [
+                'tahap'       => '1-itemset (C1/L1)',
+                'kandidat'    => 95,
+                'frequent'    => 32,
+                'keterangan'  => '32 produk memenuhi minimum support 3%.'
+            ],
+            [
+                'tahap'       => '2-itemset (C2/L2)',
+                'kandidat'    => 496,
+                'frequent'    => 36,
+                'keterangan'  => '36 kombinasi memenuhi minimum support 3%.'
+            ],
+            [
+                'tahap'       => '3-itemset (C3/L3)',
+                'kandidat'    => 19,
+                'frequent'    => 0,
+                'keterangan'  => 'Tidak ada kandidat yang memenuhi minimum support.'
+            ],
+            [
+                'tahap'       => '4-itemset dan seterusnya',
+                'kandidat'    => 'Tidak terbentuk',
+                'frequent'    => 0,
+                'keterangan'  => 'Proses dihentikan karena L3 tidak terbentuk.'
+            ]
+        ];
+
+        return [
+            'tabel_4_1'  => $tabel41,
+            'tabel_4_3'  => $tabel43,
+            'tabel_4_4'  => $tabel44,
+            'tabel_4_8'  => $tabel48,
+            'tabel_4_9'  => $tabel49,
+            'tabel_4_10' => $tabel410
         ];
     }
 

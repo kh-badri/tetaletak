@@ -91,6 +91,11 @@ class History extends BaseController
         $rules = $analisisData['rules'] ?? [];
         $perhitunganManual = $analisisData['perhitungan_manual'] ?? null;
 
+        if (empty($perhitunganManual['sampel_10'])) {
+            $apriori = new \App\Libraries\AprioriService();
+            $perhitunganManual['sampel_10'] = $apriori->getSample10Calculations();
+        }
+
         // Jika riwayat lama belum menyimpan perhitungan_manual, buat struktur fallback dinamis
         if (empty($perhitunganManual)) {
             $topRule = !empty($rules) ? $rules[0] : null;
