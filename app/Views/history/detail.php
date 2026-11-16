@@ -118,7 +118,7 @@
                                     <div class="flex items-center justify-between mb-3">
                                         <span class="text-xs font-black text-[#0284C7]">PRIORITAS #<?= $idx + 1 ?></span>
                                         <span class="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 text-[10px] font-bold">
-                                            <?= $rek['lift'] ?>x Lebih Sering
+                                            <?= number_format((float)($rek['lift'] ?? 1), 2, ',', '.') ?>x Lebih Sering
                                         </span>
                                     </div>
 
@@ -211,7 +211,7 @@
                                     </td>
                                     <td class="px-4 py-3.5 text-center whitespace-nowrap">
                                         <div class="font-black text-[#0284C7]"><?= round($r['confidence']) ?>% Pembeli</div>
-                                        <span class="text-[10px] font-bold text-teal-700"><?= $r['lift'] ?>x lebih sering</span>
+                                        <span class="text-[10px] font-bold text-teal-700"><?= number_format((float)($r['lift'] ?? 1), 2, ',', '.') ?>x lebih sering</span>
                                     </td>
                                     <td class="px-4 py-3.5 text-xs text-slate-600 leading-relaxed max-w-md">
                                         <?= esc(str_replace(['**', '##'], '', $r['saran_tata_letak'])) ?>

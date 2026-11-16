@@ -60,7 +60,7 @@
     </style>
 </head>
 
-<body class="bg-[#F0F7FF] text-slate-800 antialiased">
+<body class="bg-[#F0F7FF] text-slate-800 antialiased min-h-screen overflow-x-hidden">
 
     <!-- Page Loader -->
     <div id="page-loader">

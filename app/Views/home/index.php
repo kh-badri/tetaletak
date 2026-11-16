@@ -259,7 +259,7 @@
                                     <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 pl-10 sm:pl-0">
                                         <span class="text-xs font-black text-[#0284C7]"><?= round($rek['confidence']) ?>% Pembeli Bareng</span>
                                         <span class="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full mt-0.5">
-                                            <?= $rek['lift'] ?>x lebih sering
+                                            <?= number_format((float)($rek['lift'] ?? 1), 2, ',', '.') ?>x lebih sering
                                         </span>
                                     </div>
                                 </div>
