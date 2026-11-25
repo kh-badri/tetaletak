@@ -26,7 +26,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->delete('dataset/hapusSemua', 'Dataset::hapusSemua'); // Hapus semua transaksi
     $routes->delete('dataset/delete/(:num)', 'Dataset::delete/$1'); // Hapus satu baris transaksi
 
-    // Rute Master Produk Sembako (CRUD 95 Produk)
+    // Rute Master Produk Sembako (CRUD 60 Produk)
     $routes->post('dataset/produk/save', 'Dataset::saveProduk');
     $routes->post('dataset/produk/update/(:num)', 'Dataset::updateProduk/$1');
     $routes->delete('dataset/produk/delete/(:num)', 'Dataset::deleteProduk/$1');

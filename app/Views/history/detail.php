@@ -16,7 +16,7 @@
 <div class="w-full min-h-screen bg-[#F0F7FF] py-6 px-4 sm:px-6 text-slate-800" 
      x-data="{ 
         activeTab: 'rekomendasi', 
-        subTabKomb: 'k2',
+        subTabKomb: 'k1',
         searchRek: '',
         filterTipe: '',
         searchTeknis: ''
@@ -87,7 +87,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
-                <span>Perhitungan &amp; Ranking (Metode Excel)</span>
+                <span>Perhitungan Manual &amp; Ranking</span>
             </button>
         </div>
 
@@ -233,20 +233,20 @@
             </div>
         </div>
 
-        <!-- TAB 2: PERHITUNGAN & RANKING (METODE EXCEL) -->
+        <!-- TAB 2: PERHITUNGAN MANUAL & RANKING -->
         <div x-show="activeTab === 'perhitungan'" x-transition.opacity style="display: none;">
             <div class="bg-white rounded-3xl shadow-md shadow-sky-900/5 border border-sky-100 overflow-hidden mb-8">
                 <div class="p-5 bg-slate-800 text-white flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-1.5 bg-black/30 p-1 rounded-xl text-xs">
-                        <button type="button" @click="subTabKomb = 'k2'" 
-                                :class="subTabKomb === 'k2' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
-                                class="px-3.5 py-2 rounded-lg transition">
-                            Kombinasi 2 Produk (<?= count($kombinasi2) ?>)
-                        </button>
                         <button type="button" @click="subTabKomb = 'k1'" 
                                 :class="subTabKomb === 'k1' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
                                 class="px-3.5 py-2 rounded-lg transition">
                             Kombinasi 1 Produk (<?= count($kombinasi1) ?>)
+                        </button>
+                        <button type="button" @click="subTabKomb = 'k2'" 
+                                :class="subTabKomb === 'k2' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
+                                class="px-3.5 py-2 rounded-lg transition">
+                            Kombinasi 2 Produk (<?= count($kombinasi2) ?>)
                         </button>
                         <button type="button" @click="subTabKomb = 'k3'" 
                                 :class="subTabKomb === 'k3' ? 'bg-[#0284C7] text-white font-bold shadow' : 'text-slate-300 hover:text-white'"
@@ -259,7 +259,7 @@
                 </div>
 
                 <!-- KOMBINASI 2 PRODUK -->
-                <div x-show="subTabKomb === 'k2'" class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <div x-show="subTabKomb === 'k2'" class="overflow-x-auto max-h-[600px] overflow-y-auto" style="display: none;">
                     <table class="w-full text-xs text-left">
                         <thead class="sticky top-0 bg-sky-50 text-slate-700 text-[11px] uppercase font-bold border-b border-sky-100 z-10">
                             <tr>
@@ -293,7 +293,7 @@
                 </div>
 
                 <!-- KOMBINASI 1 PRODUK -->
-                <div x-show="subTabKomb === 'k1'" class="overflow-x-auto max-h-[600px] overflow-y-auto" style="display: none;">
+                <div x-show="subTabKomb === 'k1'" class="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table class="w-full text-xs text-left">
                         <thead class="sticky top-0 bg-sky-50 text-slate-700 text-[11px] uppercase font-bold border-b border-sky-100 z-10">
                             <tr>
