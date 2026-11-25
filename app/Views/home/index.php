@@ -181,7 +181,7 @@
                     <div class="text-2xl sm:text-3xl font-black text-slate-900 mt-1 group-hover:text-indigo-600 transition">
                         <?= number_format($totalItemTrx, 0, ',', '.') ?>
                     </div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block">Periode Agust–Okt 2026</span>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Periode 3–24 Sept 2026</span>
                 </div>
                 <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,9 +257,9 @@
                                     </div>
 
                                     <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 pl-10 sm:pl-0">
-                                        <span class="text-xs font-black text-[#0284C7]"><?= round($rek['confidence']) ?>% Pembeli Bareng</span>
+                                        <span class="text-xs font-black text-[#0284C7]">Supp: <?= number_format((float)($rek['support'] ?? 0), 3, ',', '.') ?></span>
                                         <span class="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full mt-0.5">
-                                            <?= number_format((float)($rek['lift'] ?? 1), 2, ',', '.') ?>x lebih sering
+                                            Supp×Conf: <?= number_format((float)($rek['support_x_confidence'] ?? 0), 3, ',', '.') ?>
                                         </span>
                                     </div>
                                 </div>
@@ -372,7 +372,7 @@
                         <h3 class="font-bold text-sm text-slate-900 group-hover:text-[#0284C7] transition">Siapkan Data Toko</h3>
                     </div>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Kelola daftar 95 produk sembako dan impor riwayat struk belanja melalui CSV di halaman Dataset.
+                        Kelola daftar 60 produk sembako dan impor riwayat struk belanja melalui CSV di halaman Dataset.
                     </p>
                 </a>
 

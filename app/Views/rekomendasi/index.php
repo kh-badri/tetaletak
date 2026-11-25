@@ -4,25 +4,21 @@
 
 <div class="w-full min-h-screen bg-[#F0F7FF] py-8 px-4 sm:px-6 text-slate-800" 
      x-data="{
-        support: '<?= old('min_support', '3.0') ?>',
-        confidence: '<?= old('min_confidence', '50.0') ?>',
-        lift: '<?= old('min_lift', '1.2') ?>',
-        preset: 'standar',
+        support: '<?= old('threshold_support', '0.2') ?>',
+        suppConf: '<?= old('threshold_support_confidence', '0.5') ?>',
+        preset: 'dospem',
         showRumus: false,
         setPreset(type) {
             this.preset = type;
-            if (type === 'standar') {
-                this.support = '3.0';
-                this.confidence = '50.0';
-                this.lift = '1.2';
-            } else if (type === 'ketat') {
-                this.support = '4.0';
-                this.confidence = '60.0';
-                this.lift = '1.5';
+            if (type === 'dospem') {
+                this.support = '0.2';
+                this.suppConf = '0.5';
+            } else if (type === 'optimal') {
+                this.support = '0.03';
+                this.suppConf = '0.015';
             } else if (type === 'luas') {
-                this.support = '2.0';
-                this.confidence = '30.0';
-                this.lift = '1.0';
+                this.support = '0.02';
+                this.suppConf = '0.01';
             }
         }
      }">
@@ -41,7 +37,7 @@
         <!-- KARTU UTAMA ANALISIS REKOMENDASI -->
         <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-xl shadow-sky-900/5 border border-sky-100">
             
-            <!-- Header Sederhana -->
+            <!-- Header -->
             <div class="text-center mb-7">
                 <div class="w-14 h-14 mx-auto bg-gradient-to-br from-[#38BDF8] to-[#0284C7] text-white rounded-2xl shadow-md shadow-sky-500/20 flex items-center justify-center mb-4">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,88 +46,73 @@
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Cari Rekomendasi Penataan Rak</h1>
                 <p class="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-lg mx-auto">
-                    Sistem akan mempelajari kebiasaan belanja pembeli dan merekomendasikan barang apa saja yang sebaiknya diletakkan berdampingan di toko.
+                    Analisis Market Basket (Algoritma Apriori) dengan 2 parameter uji: <strong>Threshold Support</strong> dan <strong>Threshold Support x Confidence</strong>.
                 </p>
 
-                <!-- Info Dataset Siap Pakai -->
+                <!-- Info Dataset -->
                 <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
                     <span class="px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-xs font-bold text-[#0369A1]">
-                        <?= number_format($totalTrx ?? 0, 0, ',', '.') ?> Struk Belanja
+                        <?= number_format($totalTrx ?? 0, 0, ',', '.') ?> Transaksi
                     </span>
                     <span class="px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs font-bold text-teal-800">
-                        <?= number_format($totalBaris ?? 0, 0, ',', '.') ?> Item Transaksi
-                    </span>
-                    <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
-                        Data 3 Bulan (Agust–Okt 2026)
+                        <?= number_format($totalBaris ?? 0, 0, ',', '.') ?> Item Tercatat
                     </span>
                 </div>
             </div>
 
             <!-- Pilihan Cepat (Preset) -->
             <div class="mb-6">
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">Pilih Mode Pencarian Cepat (Atau Sesuaikan Angka di Bawah)</label>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">Pilih Preset Parameter (Atau Ubah Langsung Angka di Bawah)</label>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <button type="button" @click="setPreset('standar')"
-                            :class="preset === 'standar' ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-md shadow-sky-500/20' : 'bg-sky-50/40 text-slate-700 border-sky-200 hover:bg-sky-50'"
+                    <button type="button" @click="setPreset('dospem')"
+                            :class="preset === 'dospem' ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-md shadow-sky-500/20' : 'bg-sky-50/40 text-slate-700 border-sky-200 hover:bg-sky-50'"
                             class="p-3 rounded-2xl border text-left transition">
-                        <span class="font-black text-xs block">⭐ Standar Toko</span>
-                        <span class="text-[11px] opacity-85">Seimbang (Disarankan)</span>
+                        <span class="font-black text-xs block">Default (0.2 / 0.5)</span>
+                        <span class="text-[11px] opacity-85">Standar Ambang Awal</span>
                     </button>
 
-                    <button type="button" @click="setPreset('ketat')"
-                            :class="preset === 'ketat' ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-md shadow-sky-500/20' : 'bg-sky-50/40 text-slate-700 border-sky-200 hover:bg-sky-50'"
+                    <button type="button" @click="setPreset('optimal')"
+                            :class="preset === 'optimal' ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-md shadow-sky-500/20' : 'bg-sky-50/40 text-slate-700 border-sky-200 hover:bg-sky-50'"
                             class="p-3 rounded-2xl border text-left transition">
-                        <span class="font-black text-xs block">🔥 Khusus Terlaris</span>
-                        <span class="text-[11px] opacity-85">Hanya yang paling pasti</span>
+                        <span class="font-black text-xs block">Optimal 60 Produk</span>
+                        <span class="text-[11px] opacity-85">Supp 0.03 &bull; S×C 0.015</span>
                     </button>
 
                     <button type="button" @click="setPreset('luas')"
                             :class="preset === 'luas' ? 'bg-[#0284C7] text-white border-[#0284C7] shadow-md shadow-sky-500/20' : 'bg-sky-50/40 text-slate-700 border-sky-200 hover:bg-sky-50'"
                             class="p-3 rounded-2xl border text-left transition">
-                        <span class="font-black text-xs block">🔍 Lebih Banyak</span>
-                        <span class="text-[11px] opacity-85">Tampilkan banyak opsi</span>
+                        <span class="font-black text-xs block">Lebih Banyak Opsi</span>
+                        <span class="text-[11px] opacity-85">Supp 0.02 &bull; S×C 0.01</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Form Pengaturan Parameter -->
+            <!-- Form Pengaturan 2 Parameter -->
             <?= form_open('rekomendasi/proses', ['class' => 'space-y-5']) ?>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- Support -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Threshold Support -->
                     <div class="bg-sky-50/40 p-4 rounded-2xl border border-sky-100">
                         <div class="flex justify-between items-center mb-1.5">
-                            <label for="min_support" class="text-xs font-bold text-slate-700">Min. Support (%)</label>
-                            <span class="text-xs font-black text-[#0284C7]" x-text="support + '%'">3.0%</span>
+                            <label for="threshold_support" class="text-xs font-bold text-slate-700">Threshold Support</label>
+                            <span class="text-xs font-black text-[#0284C7]" x-text="support">0.2</span>
                         </div>
-                        <input type="number" step="any" min="0.1" max="100" name="min_support" id="min_support" 
+                        <input type="number" step="any" min="0" max="1" name="threshold_support" id="threshold_support" 
                                x-model="support" @input="preset = 'custom'"
-                               class="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm font-bold text-slate-900" required>
-                        <p class="text-[11px] text-slate-500 mt-1.5 leading-snug">Minimal seberapa sering barang dibeli dari seluruh struk.</p>
+                               class="w-full px-3.5 py-2.5 bg-white border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm font-bold text-slate-900" required>
+                        <p class="text-[11px] text-slate-500 mt-1.5 leading-snug">Skala desimal 0 – 1 (contoh: 0.2 = 20%, 0.03 = 3%).</p>
                     </div>
 
-                    <!-- Confidence -->
+                    <!-- Threshold Support x Confidence -->
                     <div class="bg-sky-50/40 p-4 rounded-2xl border border-sky-100">
                         <div class="flex justify-between items-center mb-1.5">
-                            <label for="min_confidence" class="text-xs font-bold text-slate-700">Min. Confidence (%)</label>
-                            <span class="text-xs font-black text-[#0284C7]" x-text="confidence + '%'">50.0%</span>
+                            <label for="threshold_support_confidence" class="text-xs font-bold text-slate-700">Threshold Support x Confidence</label>
+                            <span class="text-xs font-black text-[#0284C7]" x-text="suppConf">0.5</span>
                         </div>
-                        <input type="number" step="any" min="0.1" max="100" name="min_confidence" id="min_confidence" 
-                               x-model="confidence" @input="preset = 'custom'"
-                               class="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm font-bold text-slate-900" required>
-                        <p class="text-[11px] text-slate-500 mt-1.5 leading-snug">Minimal peluang pembeli mengambil produk pasangannya.</p>
-                    </div>
-
-                    <!-- Lift Ratio -->
-                    <div class="bg-sky-50/40 p-4 rounded-2xl border border-sky-100">
-                        <div class="flex justify-between items-center mb-1.5">
-                            <label for="min_lift" class="text-xs font-bold text-slate-700">Min. Lift Ratio</label>
-                            <span class="text-xs font-black text-[#0284C7]" x-text="lift">1.2</span>
-                        </div>
-                        <input type="number" step="any" min="0" max="20" name="min_lift" id="min_lift" 
-                               x-model="lift" @input="preset = 'custom'"
-                               class="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm font-bold text-slate-900" required>
-                        <p class="text-[11px] text-slate-500 mt-1.5 leading-snug">Batas kekuatan hubungan (&gt; 1.0 berarti saling menguatkan).</p>
+                        <input type="number" step="any" min="0" max="1" name="threshold_support_confidence" id="threshold_support_confidence" 
+                               x-model="suppConf" @input="preset = 'custom'"
+                               class="w-full px-3.5 py-2.5 bg-white border border-sky-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm font-bold text-slate-900" required>
+                        <p class="text-[11px] text-slate-500 mt-1.5 leading-snug">Batas minimum perkalian Support &times; Confidence (skala 0 – 1).</p>
                     </div>
                 </div>
 
@@ -146,7 +127,7 @@
 
             <?= form_close() ?>
 
-            <!-- Accordion Opsional: Sekilas Cara Kerja & Rumus -->
+            <!-- Accordion Penjelasan Rumus -->
             <div class="mt-7 pt-5 border-t border-slate-100">
                 <button type="button" @click="showRumus = !showRumus" 
                         class="w-full flex items-center justify-between text-xs font-bold text-slate-600 hover:text-[#0284C7] transition">
@@ -154,25 +135,25 @@
                         <svg class="w-4 h-4 text-[#0284C7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Apa arti Support, Confidence, &amp; Lift? (Klik untuk melihat penjelasan singkat)
+                        Bagaimana cara kerja perhitungan 2 parameter ini?
                     </span>
                     <svg class="w-4 h-4 transition-transform duration-200" :class="showRumus ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
 
-                <div x-show="showRumus" x-collapse class="mt-4 grid sm:grid-cols-3 gap-3 text-xs">
-                    <div class="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-100">
-                        <strong class="text-[#0284C7] block mb-1">1. Support</strong>
-                        <p class="text-slate-600 leading-relaxed">Mengukur seberapa sering suatu barang atau pasangan barang muncul dalam semua struk belanja.</p>
+                <div x-show="showRumus" x-transition class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs" x-cloak>
+                    <div class="bg-sky-50/50 p-3.5 rounded-xl border border-sky-100">
+                        <span class="font-black text-[#0284C7] block mb-1">1. Support</span>
+                        <p class="text-slate-600 leading-relaxed">Jumlah transaksi mengandung produk IF &amp; THEN dibagi Total Transaksi.</p>
                     </div>
-                    <div class="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-100">
-                        <strong class="text-[#0284C7] block mb-1">2. Confidence</strong>
-                        <p class="text-slate-600 leading-relaxed">Menghitung kepastian: <span class="italic">"Jika pelanggan ambil Barang A, berapa persen peluangnya ia mengambil Barang B?"</span></p>
+                    <div class="bg-sky-50/50 p-3.5 rounded-xl border border-sky-100">
+                        <span class="font-black text-indigo-600 block mb-1">2. Confidence</span>
+                        <p class="text-slate-600 leading-relaxed">Jumlah transaksi mengandung produk IF &amp; THEN dibagi jumlah transaksi produk THEN.</p>
                     </div>
-                    <div class="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-100">
-                        <strong class="text-[#0284C7] block mb-1">3. Lift Ratio</strong>
-                        <p class="text-slate-600 leading-relaxed">Menguji kevalidan pasangan. Jika nilai <strong>&gt; 1.0</strong>, kedua barang benar-benar cocok diletakkan bersebelahan.</p>
+                    <div class="bg-sky-50/50 p-3.5 rounded-xl border border-sky-100">
+                        <span class="font-black text-teal-600 block mb-1">3. Support &times; Confidence</span>
+                        <p class="text-slate-600 leading-relaxed">Perkalian Support dan Confidence untuk menentukan ranking rekomendasi terkuat.</p>
                     </div>
                 </div>
             </div>

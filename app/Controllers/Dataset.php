@@ -7,7 +7,7 @@ use App\Models\DatasetModel;
 use App\Models\ProdukModel;
 
 /**
- * Controller untuk mengelola Dataset Transaksi Sembako & Master 95 Produk Sembako.
+ * Controller untuk mengelola Dataset Transaksi Sembako & Master 60 Produk Sembako.
  */
 class Dataset extends BaseController
 {
@@ -44,7 +44,7 @@ class Dataset extends BaseController
         $activeTab = $this->request->getGet('tab') ?? 'produk';
 
         $data = [
-            'title'               => 'Dataset Sembako & Master 95 Produk | Apriori',
+            'title'               => 'Dataset Sembako & Master 60 Produk | Apriori',
             'dataset'             => $dataset,
             'daftarProduk'        => $daftarProduk,
             'kategoriList'        => $kategoriList,
@@ -60,7 +60,7 @@ class Dataset extends BaseController
     }
 
     // =========================================================================
-    // FITUR CRUD MASTER PRODUK SEMBAKO (95 PRODUK)
+    // FITUR CRUD MASTER PRODUK SEMBAKO (60 PRODUK)
     // =========================================================================
 
     /**
@@ -232,7 +232,7 @@ class Dataset extends BaseController
             if (count($row) >= 8) {
                 $noTrx = trim($row[0]);
                 $tglRaw = trim($row[1]);
-                $idProd = (int) trim($row[2]);
+                $idProd = !empty(trim($row[2])) ? (int) trim($row[2]) : null;
                 $namaProd = trim($row[3]);
                 $katProd = trim($row[4]);
                 $harga = (int) trim($row[5]);
@@ -246,6 +246,16 @@ class Dataset extends BaseController
                 $qty = (int) trim($row[4]);
                 $total = $harga * $qty;
                 $noTrx = 'TRX-' . date('Ymd') . '-' . str_pad($rowCount, 4, '0', STR_PAD_LEFT);
+                $idProd = null;
+            } elseif (count($row) >= 3) {
+                // Format ringkas 3-4 kolom: no_transaksi, tanggal_transaksi, kode_produk, [total_harga]
+                $noTrx = trim($row[0]);
+                $tglRaw = trim($row[1]);
+                $namaProd = trim($row[2]);
+                $katProd = 'Sembako';
+                $qty = max(1, count(array_filter(array_map('trim', preg_split('/[;,]+/', $namaProd)))));
+                $total = isset($row[3]) ? (int) trim($row[3]) : 0;
+                $harga = $total;
                 $idProd = null;
             } else {
                 continue;

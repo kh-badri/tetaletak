@@ -7,13 +7,13 @@ CREATE DATABASE IF NOT EXISTS `tataletak_db` DEFAULT CHARACTER SET utf8mb4 COLLA
 USE `tataletak_db`;
 
 -- ---------------------------------------------------------------------
--- 1. TABEL MASTER PRODUK SEMBAKO (95 PRODUK)
+-- 1. TABEL MASTER PRODUK SEMBAKO (60 PRODUK)
 -- ---------------------------------------------------------------------
 DROP TABLE IF EXISTS `produk`;
 CREATE TABLE `produk` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `nama_produk` VARCHAR(150) NOT NULL,
-  `kategori_produk` VARCHAR(100) NOT NULL,
+  `nama_produk` TEXT NOT NULL,
+  `kategori_produk` TEXT NOT NULL,
   `harga_satuan` INT(11) NOT NULL,
   `satuan` VARCHAR(50) DEFAULT 'pcs',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -32,8 +32,8 @@ CREATE TABLE `dataset_produk` (
   `no_transaksi` VARCHAR(50) NOT NULL,
   `waktu_penjualan` DATE NOT NULL,
   `id_produk` INT(11) NULL,
-  `nama_produk` VARCHAR(150) NOT NULL,
-  `kategori_produk` VARCHAR(100) NOT NULL,
+  `nama_produk` TEXT NOT NULL,
+  `kategori_produk` TEXT NOT NULL,
   `harga_produk_rp` INT(11) NOT NULL,
   `jumlah_terjual_unit` INT(11) NOT NULL,
   `total_harga` INT(11) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE `dataset_produk` (
   PRIMARY KEY (`id`),
   INDEX `idx_no_transaksi` (`no_transaksi`),
   INDEX `idx_waktu` (`waktu_penjualan`),
-  INDEX `idx_nama_produk` (`nama_produk`)
+  INDEX `idx_nama_produk` (`nama_produk`(150))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------

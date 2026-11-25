@@ -24,21 +24,20 @@ class History extends BaseController
 
         $historyList = [];
         foreach ($rawHistory as $row) {
-            $analisisData = json_decode($row['hasil_analisis'] ?? '{}', true) ?: [];
+            $analisisData    = json_decode($row['hasil_analisis'] ?? '{}', true) ?: [];
             $rekomendasiData = json_decode($row['hasil_evaluasi'] ?? '[]', true) ?: [];
-            $params = json_decode($row['hasil_prediksi'] ?? '{}', true) ?: [];
+            $params          = json_decode($row['hasil_prediksi'] ?? '{}', true) ?: [];
 
             $historyList[] = [
-                'id'                   => $row['id'],
-                'tanggal_analisis'     => $row['tanggal_analisis'],
-                'accuracy'             => $row['accuracy'],
-                'total_data'           => $row['total_data'],
-                'total_rules'          => $analisisData['total_rules'] ?? count($analisisData['rules'] ?? []),
-                'total_rekomendasi'    => count($rekomendasiData),
-                'min_support'          => $params['min_support'] ?? 3.0,
-                'min_confidence'       => $params['min_confidence'] ?? 50.0,
-                'min_lift'             => $params['min_lift'] ?? 1.2,
-                'contoh_rekomendasi'   => !empty($rekomendasiData[0]) ? ($rekomendasiData[0]['produk_utama'] . ' ↔ ' . $rekomendasiData[0]['produk_asosiasi']) : 'Rekomendasi Rak Sembako'
+                'id'                           => $row['id'],
+                'tanggal_analisis'             => $row['tanggal_analisis'],
+                'accuracy'                     => $row['accuracy'],
+                'total_data'                   => $row['total_data'],
+                'total_rules'                  => $analisisData['total_lolos'] ?? count($analisisData['rules'] ?? []),
+                'total_rekomendasi'            => count($rekomendasiData),
+                'threshold_support'            => $params['threshold_support'] ?? ($params['min_support'] ?? 0.2),
+                'threshold_support_confidence' => $params['threshold_support_confidence'] ?? ($params['min_confidence'] ?? 0.5),
+                'contoh_rekomendasi'           => !empty($rekomendasiData[0]) ? ($rekomendasiData[0]['produk_utama'] . ' ↔ ' . $rekomendasiData[0]['produk_asosiasi']) : 'Rekomendasi Rak Sembako'
             ];
         }
 
@@ -83,93 +82,28 @@ class History extends BaseController
             return redirect()->to('history')->with('error', 'Data riwayat tidak ditemukan.');
         }
 
-        $analisisData = json_decode($item['hasil_analisis'] ?? '{}', true) ?: [];
+        $analisisData    = json_decode($item['hasil_analisis'] ?? '{}', true) ?: [];
         $rekomendasiData = json_decode($item['hasil_evaluasi'] ?? '[]', true) ?: [];
-        $params = json_decode($item['hasil_prediksi'] ?? '{}', true) ?: [];
-
-        $minSuppCount = $params['min_support_count'] ?? (int) ceil((($params['min_support'] ?? 3.0) / 100) * $item['total_data']);
-        $rules = $analisisData['rules'] ?? [];
-        $perhitunganManual = $analisisData['perhitungan_manual'] ?? null;
-
-        if (empty($perhitunganManual['sampel_10'])) {
-            $apriori = new \App\Libraries\AprioriService();
-            $perhitunganManual['sampel_10'] = $apriori->getSample10Calculations();
-        }
-
-        // Jika riwayat lama belum menyimpan perhitungan_manual, buat struktur fallback dinamis
-        if (empty($perhitunganManual)) {
-            $topRule = !empty($rules) ? $rules[0] : null;
-            $contohKasus = null;
-            if ($topRule) {
-                $nA = $topRule['count_a'] ?? 29;
-                $nB = $topRule['count_b'] ?? 60;
-                $nAB = $topRule['jumlah_transaksi'] ?? 18;
-                $N = $item['total_data'] ?: 766;
-                $contohKasus = [
-                    'item_a'          => $topRule['antecedent'],
-                    'item_b'          => $topRule['consequent'],
-                    'kategori_a'      => $topRule['kategori_a'] ?? 'Sembako',
-                    'kategori_b'      => $topRule['kategori_b'] ?? 'Sembako',
-                    'n_total'         => $N,
-                    'count_a'         => $nA,
-                    'count_b'         => $nB,
-                    'count_ab'        => $nAB,
-                    'min_support_pct' => $params['min_support'] ?? 3.0,
-                    'min_supp_count'  => $minSuppCount,
-                    'min_conf_pct'    => $params['min_confidence'] ?? 50.0,
-                    'min_lift'        => $params['min_lift'] ?? 1.2,
-                    'supp_a'          => $topRule['support_a'] ?? round(($nA / $N) * 100, 2),
-                    'supp_b'          => $topRule['support_b'] ?? round(($nB / $N) * 100, 2),
-                    'supp_ab'         => $topRule['support'] ?? round(($nAB / $N) * 100, 2),
-                    'confidence'      => $topRule['confidence'] ?? 62.07,
-                    'lift'            => $topRule['lift'] ?? 7.92,
-                    'status_supp_a'   => 'Lolos L1',
-                    'status_supp_b'   => 'Lolos L1',
-                    'status_supp_ab'  => 'Lolos L2',
-                    'status_conf'     => 'Lolos Min Confidence',
-                    'status_lift'     => 'Lolos Min Lift (Korelasi Sangat Kuat)'
-                ];
-            }
-
-            $perhitunganManual = [
-                'ringkasan' => [
-                    'total_transaksi'        => $item['total_data'],
-                    'min_support_persen'     => $params['min_support'] ?? 3.0,
-                    'min_support_count'      => $minSuppCount,
-                    'min_confidence_persen'  => $params['min_confidence'] ?? 50.0,
-                    'min_lift'               => $params['min_lift'] ?? 1.2,
-                    'c1_total'               => 95,
-                    'l1_total'               => count($analisisData['frequent_itemsets_1'] ?? []),
-                    'c1_tereliminasi'        => max(0, 95 - count($analisisData['frequent_itemsets_1'] ?? [])),
-                    'c2_kombinasi_teoritis'  => 1225,
-                    'c2_total_ada'           => 607,
-                    'l2_total'               => count($analisisData['frequent_itemsets_2'] ?? []),
-                    'c2_tereliminasi'        => max(0, 607 - count($analisisData['frequent_itemsets_2'] ?? [])),
-                    'total_rules'            => count($rules)
-                ],
-                'contoh_kasus' => $contohKasus,
-                'c1_lengkap'   => [],
-                'c2_lengkap'   => []
-            ];
-        }
+        $params          = json_decode($item['hasil_prediksi'] ?? '{}', true) ?: [];
 
         $hasil = [
-            'status'                => 'success',
-            'total_transaksi'       => $item['total_data'],
-            'min_support'           => $params['min_support'] ?? 3.0,
-            'min_confidence'        => $params['min_confidence'] ?? 50.0,
-            'min_lift'              => $params['min_lift'] ?? 1.2,
-            'min_support_count'     => $minSuppCount,
-            'itemsets_1'            => $analisisData['frequent_itemsets_1'] ?? [],
-            'itemsets_2'            => $analisisData['frequent_itemsets_2'] ?? [],
-            'total_rules'           => $analisisData['total_rules'] ?? count($rules),
-            'rules'                 => $rules,
-            'rekomendasi_tataletak' => $rekomendasiData,
-            'perhitungan_manual'    => $perhitunganManual
+            'status'                       => 'success',
+            'total_transaksi'              => $item['total_data'],
+            'total_produk'                 => $analisisData['total_produk'] ?? 60,
+            'threshold_support'            => $params['threshold_support'] ?? ($params['min_support'] ?? 0.2),
+            'threshold_support_confidence' => $params['threshold_support_confidence'] ?? ($params['min_confidence'] ?? 0.5),
+            'is_fallback_ranking'          => $analisisData['is_fallback_ranking'] ?? false,
+            'total_lolos'                  => $analisisData['total_lolos'] ?? count($analisisData['rules'] ?? []),
+            'kombinasi_1'                  => $analisisData['kombinasi_1'] ?? [],
+            'kombinasi_2'                  => $analisisData['kombinasi_2'] ?? ($analisisData['rules'] ?? []),
+            'kombinasi_3'                  => $analisisData['kombinasi_3'] ?? [],
+            'rules'                        => $analisisData['rules'] ?? [],
+            'rekomendasi_tataletak'        => $rekomendasiData,
+            'kesimpulan_excel'             => $analisisData['kesimpulan_excel'] ?? []
         ];
 
         $data = [
-            'title'            => 'Detail Riwayat Rekomendasi #' . $item['id'],
+            'title'            => 'Detail Riwayat Tata Letak #' . $item['id'] . ' | Apriori',
             'hasil'            => $hasil,
             'tanggal_analisis' => $item['tanggal_analisis'],
             'active_menu'      => 'history'

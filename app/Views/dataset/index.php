@@ -135,6 +135,7 @@
                         <thead class="sticky top-0 bg-slate-50 text-slate-600 text-[11px] uppercase font-bold tracking-wider z-10 border-b border-sky-100">
                             <tr>
                                 <th class="px-4 py-3 text-center w-14">No</th>
+                                <th class="px-4 py-3 text-center w-20">Kode</th>
                                 <th class="px-4 py-3">Nama Produk Sembako</th>
                                 <th class="px-4 py-3">Kategori</th>
                                 <th class="px-4 py-3 text-right">Harga Satuan</th>
@@ -145,13 +146,14 @@
                         <tbody class="divide-y divide-slate-100 text-slate-800">
                             <?php if (empty($daftarProduk)) : ?>
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                                    <td colspan="7" class="px-6 py-12 text-center text-slate-500">
                                         Belum ada produk sembako. Klik tombol <strong>+ Tambah Produk Baru</strong> untuk memulai.
                                     </td>
                                 </tr>
                             <?php else : ?>
                                 <?php foreach ($daftarProduk as $idx => $prod) : ?>
-                                    <tr data-search="<?= strtolower(esc($prod['nama_produk'])) ?>"
+                                    <?php $kodeProduk = 'P' . $prod['id']; ?>
+                                    <tr data-search="<?= strtolower(esc($kodeProduk . ' ' . $prod['nama_produk'])) ?>"
                                         data-kategori="<?= esc($prod['kategori_produk']) ?>"
                                         x-show="
                                             (searchProduk === '' || $el.dataset.search.includes(searchProduk.toLowerCase())) &&
@@ -159,6 +161,11 @@
                                         " class="hover:bg-sky-50/50 transition">
                                         <td class="px-4 py-3 text-center font-bold text-slate-400">
                                             <?= $idx + 1 ?>
+                                        </td>
+                                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                                            <span class="px-2.5 py-1 rounded-lg bg-[#0284C7] text-white font-mono text-xs font-black shadow-sm">
+                                                <?= $kodeProduk ?>
+                                            </span>
                                         </td>
                                         <td class="px-4 py-3 font-semibold text-slate-900">
                                             <?= esc($prod['nama_produk']) ?>
@@ -265,7 +272,7 @@
                             <tr>
                                 <th class="px-4 py-3">No Struk</th>
                                 <th class="px-4 py-3">Tanggal</th>
-                                <th class="px-4 py-3">Nama Produk Sembako</th>
+                                <th class="px-4 py-3">Kode Produk Dibeli</th>
                                 <th class="px-4 py-3">Kategori</th>
                                 <th class="px-4 py-3 text-right">Harga</th>
                                 <th class="px-4 py-3 text-center">Qty</th>

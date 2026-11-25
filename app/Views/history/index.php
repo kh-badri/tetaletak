@@ -89,12 +89,10 @@
                                     Tanggal Eksekusi: <strong class="text-slate-700"><?= date('d F Y, H:i', strtotime($row['tanggal_analisis'])) ?> WIB</strong>
                                     &bull; Transaksi: <strong class="text-slate-700"><?= number_format($row['total_data'], 0, ',', '.') ?> struk</strong>
                                 </p>
-                                <div class="inline-flex items-center gap-3 text-xs bg-sky-50/50 px-3 py-1.5 rounded-xl border border-sky-100">
-                                    <span>Min. Support: <strong class="text-[#0284C7]"><?= $row['min_support'] ?>%</strong></span>
+                                <div class="inline-flex flex-wrap items-center gap-3 text-xs bg-sky-50/50 px-3 py-1.5 rounded-xl border border-sky-100">
+                                    <span>Threshold Support: <strong class="text-[#0284C7]"><?= $row['threshold_support'] ?? 0.2 ?></strong></span>
                                     <span class="text-slate-300">&bull;</span>
-                                    <span>Min. Confidence: <strong class="text-[#0284C7]"><?= $row['min_confidence'] ?>%</strong></span>
-                                    <span class="text-slate-300">&bull;</span>
-                                    <span>Min. Lift: <strong class="text-[#0284C7]"><?= $row['min_lift'] ?></strong></span>
+                                    <span>Threshold Supp×Conf: <strong class="text-[#0284C7]"><?= $row['threshold_support_confidence'] ?? 0.5 ?></strong></span>
                                 </div>
                             </div>
                         </div>

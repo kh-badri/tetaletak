@@ -7,7 +7,7 @@ use App\Libraries\AprioriService;
 
 /**
  * Controller untuk menghasilkan Rekomendasi Tata Letak Produk Toko Sembako
- * Menggunakan Algoritma Apriori (Market Basket Analysis).
+ * Menggunakan Algoritma Apriori 2 Parameter (Threshold Support & Threshold Support x Confidence).
  */
 class Rekomendasi extends BaseController
 {
@@ -29,7 +29,7 @@ class Rekomendasi extends BaseController
      */
     public function index()
     {
-        $totalTrx = $this->db->query("SELECT COUNT(DISTINCT no_transaksi) as total_trx FROM dataset_produk")->getRowArray()['total_trx'] ?? 0;
+        $totalTrx   = $this->db->query("SELECT COUNT(DISTINCT no_transaksi) as total_trx FROM dataset_produk")->getRowArray()['total_trx'] ?? 0;
         $totalBaris = $this->db->table('dataset_produk')->countAllResults();
 
         $data = [
@@ -44,34 +44,30 @@ class Rekomendasi extends BaseController
     }
 
     /**
-     * Memproses algoritma Apriori untuk menghasilkan rekomendasi penataan rak produk.
+     * Memproses algoritma Apriori 2 parameter untuk menghasilkan rekomendasi penataan rak produk.
      */
     public function proses()
     {
         try {
-            $minSupport    = (float) ($this->request->getPost('min_support') ?? 3.0);
-            $minConfidence = (float) ($this->request->getPost('min_confidence') ?? 50.0);
-            $minLift       = (float) ($this->request->getPost('min_lift') ?? 1.2);
+            $thresholdSupport   = (float) ($this->request->getPost('threshold_support') ?? 0.2);
+            $thresholdSuppConf  = (float) ($this->request->getPost('threshold_support_confidence') ?? 0.5);
 
-            // Validasi batasan input
-            if ($minSupport <= 0 || $minSupport > 100) {
-                return redirect()->back()->withInput()->with('error', 'Nilai Minimum Support harus antara 0.1% hingga 100%.');
+            // Validasi batasan input (skala desimal 0 sampai 1)
+            if ($thresholdSupport < 0 || $thresholdSupport > 1) {
+                return redirect()->back()->withInput()->with('error', 'Nilai Threshold Support harus antara 0 hingga 1 (contoh: 0.2 atau 0.03).');
             }
-            if ($minConfidence <= 0 || $minConfidence > 100) {
-                return redirect()->back()->withInput()->with('error', 'Nilai Minimum Confidence harus antara 0.1% hingga 100%.');
-            }
-            if ($minLift < 0) {
-                return redirect()->back()->withInput()->with('error', 'Nilai Minimum Lift Ratio minimal 0.0.');
+            if ($thresholdSuppConf < 0 || $thresholdSuppConf > 1) {
+                return redirect()->back()->withInput()->with('error', 'Nilai Threshold Support x Confidence harus antara 0 hingga 1 (contoh: 0.5 atau 0.015).');
             }
 
-            // Eksekusi Algoritma Apriori murni
-            $hasil = $this->aprioriService->run($minSupport, $minConfidence, $minLift);
+            // Eksekusi Algoritma Apriori sesuai Excel Dospem
+            $hasil = $this->aprioriService->run($thresholdSupport, $thresholdSuppConf);
 
-            if (empty($hasil['rules']) && empty($hasil['itemsets_1'])) {
-                return redirect()->back()->withInput()->with('error', 'Tidak ditemukan pola kombinasi produk dengan parameter tersebut. Cobalah turunkan nilai Minimum Support (misal: 1.5% atau 2%) atau Minimum Confidence (misal: 20%).');
+            if (($hasil['total_transaksi'] ?? 0) === 0) {
+                return redirect()->back()->withInput()->with('error', 'Dataset transaksi masih kosong. Silakan impor CSV transaksi terlebih dahulu.');
             }
 
-            // Simpan hasil ke session agar siap disimpan ke riwayat jika diperlukan
+            // Simpan hasil ke session agar siap disimpan ke riwayat
             $this->session->set('hasil_rekomendasi_terakhir', $hasil);
 
             return view('rekomendasi/hasil', [
@@ -98,30 +94,31 @@ class Rekomendasi extends BaseController
         }
 
         try {
-            // Hitung rata-rata confidence untuk metrik kualitas asosiasi
-            $avgConfidence = 0;
-            if (!empty($hasilTerakhir['rules'])) {
-                $totalConf = array_sum(array_column($hasilTerakhir['rules'], 'confidence'));
-                $avgConfidence = round($totalConf / count($hasilTerakhir['rules']), 2);
+            $sumber = !empty($hasilTerakhir['rules']) ? $hasilTerakhir['rules'] : ($hasilTerakhir['kombinasi_2'] ?? []);
+            $avgSxC = 0;
+            if (!empty($sumber)) {
+                $totalSxC = array_sum(array_column($sumber, 'support_x_confidence'));
+                $avgSxC = round(($totalSxC / count($sumber)) * 100, 2);
             }
 
             $dataToSave = [
                 'tanggal_analisis' => date('Y-m-d H:i:s'),
-                'accuracy'         => $avgConfidence,
+                'accuracy'         => $avgSxC,
                 'total_data'       => $hasilTerakhir['total_transaksi'] ?? 0,
                 'hasil_analisis'   => json_encode([
-                    'frequent_itemsets_1' => $hasilTerakhir['itemsets_1'] ?? [],
-                    'frequent_itemsets_2' => $hasilTerakhir['itemsets_2'] ?? [],
-                    'total_rules'         => $hasilTerakhir['total_rules'] ?? 0,
+                    'total_produk'        => $hasilTerakhir['total_produk'] ?? 60,
+                    'total_lolos'         => $hasilTerakhir['total_lolos'] ?? 0,
+                    'is_fallback_ranking' => $hasilTerakhir['is_fallback_ranking'] ?? false,
+                    'kombinasi_1'         => $hasilTerakhir['kombinasi_1'] ?? [],
+                    'kombinasi_2'         => $hasilTerakhir['kombinasi_2'] ?? [],
+                    'kombinasi_3'         => $hasilTerakhir['kombinasi_3'] ?? [],
                     'rules'               => $hasilTerakhir['rules'] ?? [],
-                    'perhitungan_manual'  => $hasilTerakhir['perhitungan_manual'] ?? []
+                    'kesimpulan_excel'    => $hasilTerakhir['kesimpulan_excel'] ?? [],
                 ]),
                 'hasil_evaluasi'   => json_encode($hasilTerakhir['rekomendasi_tataletak'] ?? []),
                 'hasil_prediksi'   => json_encode([
-                    'min_support'       => $hasilTerakhir['min_support'],
-                    'min_confidence'    => $hasilTerakhir['min_confidence'],
-                    'min_lift'          => $hasilTerakhir['min_lift'],
-                    'min_support_count' => $hasilTerakhir['min_support_count'] ?? 0
+                    'threshold_support'            => $hasilTerakhir['threshold_support'] ?? 0.2,
+                    'threshold_support_confidence' => $hasilTerakhir['threshold_support_confidence'] ?? 0.5,
                 ])
             ];
 
@@ -135,4 +132,3 @@ class Rekomendasi extends BaseController
         }
     }
 }
-
